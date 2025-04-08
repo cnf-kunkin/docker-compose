@@ -158,7 +158,7 @@ network:
   ethernets:
     ens33:
       addresses:
-      - "172.16.10.8/24" 
+      - "172.16.10.90/24" 
       nameservers:
         addresses:
         - 8.8.8.8
@@ -177,15 +177,7 @@ sudo apt update
 sudo apt upgrade -y
 
 # 기본 도구 설치
-sudo apt install -y \
-  curl \
-  wget \
-  git \
-  vim \
-  net-tools \
-  ca-certificates \
-  gnupg \
-  lsb-release
+sudo apt install -y  curl   wget   git   vim   net-tools   ca-certificates   gnupg   lsb-release
 ```
 
 ## 3. Docker 설치
@@ -215,20 +207,7 @@ sudo chown root:root /data/docker
 # Docker 데이터 디렉토리 설정
 sudo tee /etc/docker/daemon.json <<EOF
 {
-  "data-root": "/data/docker",
-  "default-ulimits": {
-    "nofile": { "Hard": 65535, "Soft": 65535 },
-    "nproc": { "Hard": 65535, "Soft": 65535 }
-  },
-  "log-driver": "json-file",
-  "log-opts": {
-    "max-size": "100m",
-    "max-file": "5"
-  },
-  "storage-driver": "overlay2",
-  "live-restore": true,
-  "oom-score-adjust": -500,
-  "init": true
+  "data-root": "/data/docker"
 }
 EOF
 
@@ -243,7 +222,7 @@ sudo usermod -aG docker $USER
 sudo systemctl restart docker
 
 # 새로운 데이터 경로 확인
-docker info | grep "Docker Root Dir"
+sudo docker info | grep "Docker Root Dir"
 ```
 
 ### 3.3 Docker Compose 설치
@@ -288,6 +267,9 @@ sudo ufw allow https
 # Docker 관련 포트 개방 (필요한 경우)
 sudo ufw allow 2375/tcp  # Docker daemon
 sudo ufw allow 2376/tcp  # Docker daemon TLS
+
+# UFW 상태 확인
+sudo ufw status 
 ```
 
 ## 5. 설치 확인
@@ -299,32 +281,34 @@ docker-compose version
 
 # Docker 실행 테스트
 docker run hello-world
+# Docker 실행 테스트 삭제
+docker rm $(docker ps -a -q)  # Remove all containers first
+docker rmi hello-world        # Then remove the image
+
+# 종료후 os 이미지 자동 시작 삭제 처리 
+
 ```
 ## 6. VM별 호스트네임 변경
 ```bash
-# IP 주소 변경
-sudo sed -i 's/172\.16\.10\.8/172.16.10.3/g' /etc/netplan/50-cloud-init.yaml
-sudo ip route add default via 172.16.10.2
-
 # VM별 IP 및 호스트네임 변경
 # LoadBalancer VM (172.16.10.3)
-sudo sed -i 's/172\.16\.10\.8/172.16.10.3/g' /etc/netplan/50-cloud-init.yaml
+sudo sed -i 's/172\.16\.10\.90/172.16.10.3/g' /etc/netplan/50-cloud-init.yaml
 sudo hostnamectl set-hostname vm-haproxy
 
 # CI/CD VM (172.16.10.10)
-sudo sed -i 's/172\.16\.10\.8/172.16.10.10/g' /etc/netplan/50-cloud-init.yaml
+sudo sed -i 's/172\.16\.10\.90/172.16.10.10/g' /etc/netplan/50-cloud-init.yaml
 sudo hostnamectl set-hostname vm-cicd
 
 # Monitoring VM (172.16.10.20)
-sudo sed -i 's/172\.16\.10\.8/172.16.10.20/g' /etc/netplan/50-cloud-init.yaml
+sudo sed -i 's/172\.16\.10\.90/172.16.10.20/g' /etc/netplan/50-cloud-init.yaml
 sudo hostnamectl set-hostname vm-monitoring
 
 # Security VM (172.16.10.30)
-sudo sed -i 's/172\.16\.10\.8/172.16.10.30/g' /etc/netplan/50-cloud-init.yaml
+sudo sed -i 's/172\.16\.10\.90/172.16.10.30/g' /etc/netplan/50-cloud-init.yaml
 sudo hostnamectl set-hostname vm-security
 
 # Application VM (172.16.10.40)
-sudo sed -i 's/172\.16\.10\.8/172.16.10.40/g' /etc/netplan/50-cloud-init.yaml
+sudo sed -i 's/172\.16\.10\.90/172.16.10.40/g' /etc/netplan/50-cloud-init.yaml
 sudo hostnamectl set-hostname vm-app
 
 # IP 설정 확인

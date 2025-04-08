@@ -19,33 +19,57 @@ graph TB
     HAProxy --> APP["Application VM<br>172.16.10.40"]
 ```
 
-## 2. 디렉토리 구조
+## 1.1 HAProxy 포트 구성
+
+| 포트 | 프로토콜 | 용도 |
+|------|----------|------|
+| 80 | HTTP | 일반 웹 트래픽 처리 |
+| 443 | HTTPS | 암호화된 웹 트래픽 처리 |
+| 8404 | HTTP | HAProxy 상태 모니터링 페이지 |
+
+## 2. 디렉토리 구조 및 권한 설정
 
 ```bash
-/data/
-├── certs/
-│   └── combined/          # SSL 인증서
-├── haproxy/
-│   ├── logs/             # HAProxy 로그
-│   └── lib/              # HAProxy 데이터
-└── logs/                 # 일반 로그
+# 기본 디렉토리 생성
+sudo mkdir -p /data/{certs/{combined,private},haproxy/{logs,lib,data},logs}
 
-# 디렉토리 생성 및 권한 설정
-sudo mkdir -p /data/{certs/combined,haproxy/{logs,lib},logs}
-sudo chown -R root:root /data/haproxy
-sudo chmod 775 /data/haproxy
-sudo chmod 775 /data/haproxy/logs
-sudo setfacl -R -m u:haproxy:rwx /data/haproxy/logs
+# HAProxy 사용자 및 그룹 생성 (Docker 컨테이너의 기본 UID/GID 사용)
+sudo groupadd -r -g 99 haproxy
+sudo useradd -r -u 99 -g haproxy -d /var/lib/haproxy -s /sbin/nologin haproxy
+
+# 소유권 설정
+sudo chown -R root:root /data/certs
+sudo chown -R 99:99 /data/haproxy
+sudo chown -R syslog:adm /data/logs
+
+# 권한 설정
+sudo chmod 700 /data/certs/private
+sudo chmod 755 /data/certs/combined
+sudo chmod -R 755 /data/haproxy
+sudo chmod 644 /data/haproxy/logs/*
+sudo chmod -R 755 /data/logs
+
+# SELinux 컨텍스트 설정 (SELinux가 활성화된 경우)
+if command -v semanage >/dev/null 2>&1; then
+    sudo semanage fcontext -a -t httpd_sys_content_t "/data/haproxy(/.*)?"
+    sudo restorecon -R /data/haproxy
+fi
+
+# HAProxy 실행 디렉토리 생성
+sudo mkdir -p /var/run/haproxy
+sudo chown haproxy:haproxy /var/run/haproxy
+sudo chmod 755 /var/run/haproxy
 ```
-
 
 ## 3. SSL 인증서 설정
 ```bash
 # 인증서 생성
 cd /data
-cp ~/loadbalancer/config/ssl/generate-certs.sh /data/
-chmod +x generate-certs.sh
+sudo cp /home/ubuntu/docker-compose/loadbalancer/config/ssl/generate-certs.sh /data/
+sudo chmod +x generate-certs.sh
 sudo ./generate-certs.sh
+
+sudo chown -R root:root /data/haproxy
 
 # 권한 설정
 sudo chown -R root:root /data/certs
@@ -56,62 +80,95 @@ sudo chmod 755 /data/certs/combined
 ## 5. 서비스 관리
 ```bash
 # 서비스 시작
- cd ~/loadbalancer/docker/
+cd ~/docker-compose/loadbalancer/docker/
 docker compose up -d
 
-# 서비스 상태 확인
+```
+
+# 서비스 확인 및 관리
+
+## 1. 서비스 상태 확인
+```bash
+# 컨테이너 상태 확인
+cd ~/docker-compose/loadbalancer/docker/
 docker compose ps
 
-# 설정 리로드
-docker compose exec haproxy haproxy -sf $(pidof haproxy)
-```
+# 실시간 로그 확인
+docker compose logs -f
 
-## 6. 모니터링
-```bash
-# 연결 상태 확인
-watch 'netstat -ant | grep ESTABLISHED | wc -l'
-
-# 리소스 사용량
+# 컨테이너 리소스 사용량 모니터링
 docker stats haproxy
-
-# 로그 모니터링
-tail -f /data/haproxy/logs/haproxy.log
 ```
 
-## 7. 문제 해결
-
-### 7.1 인증서 오류
+## 2. HAProxy 서비스 동작 확인
 ```bash
-# 인증서 경로 확인
-ls -l /data/certs/combined/
+# HAProxy 프로세스 확인
+docker compose exec haproxy ps aux | grep haproxy
 
-# 인증서 권한 확인
-sudo chmod 644 /data/certs/combined/*.pem
-sudo chmod 755 /data/certs/combined
-```
-
-### 7.2 권한 문제
-```bash
-# HAProxy 데이터 디렉토리 권한
-sudo chown -R 99:99 /data/haproxy
-sudo chmod 755 /data/haproxy
-
-# 로그 디렉토리 권한
-sudo chown -R 99:99 /data/haproxy/logs
-```
-
-
-## 4. HAProxy 설정 확인
-
-### 4.1 설정 테스트
-```bash
-# 컨테이너 내부에서 설정 확인
+# HAProxy 설정 파일 검증
 docker compose exec haproxy haproxy -c -f /usr/local/etc/haproxy/haproxy.cfg
 
-# 로그 확인
-docker compose logs -f
+# Stats 페이지 접속 확인
+curl -u admin:changeme http://localhost:8404/stats
+
+# SSL 인증서 검증
+docker compose exec haproxy openssl x509 -in /etc/ssl/certs/haproxy.pem -text -noout
 ```
 
-### 4.2 상태 페이지
-- URL: https://haproxy.local:8404/stats
-- 기본 계정: admin/changeme
+## 3. 서비스 연결성 확인
+```bash
+# 백엔드 서비스 연결 테스트
+curl -k https://gitlab.local
+curl -k https://jenkins.local
+curl -k https://grafana.local
+curl -k https://sonarqube.local
+
+# DNS 확인
+ping gitlab.local
+ping jenkins.local
+```
+
+## 4. 컨테이너 콘솔 접속
+```bash
+# 대화형 셸로 접속
+docker compose exec haproxy sh
+
+# 또는 bash가 필요한 경우 (이미지에 bash가 설치된 경우)
+docker compose exec haproxy bash
+
+# root 권한으로 접속이 필요한 경우
+docker compose exec -u root haproxy sh
+
+# 특정 명령어 실행
+docker compose exec haproxy cat /usr/local/etc/haproxy/haproxy.cfg
+```
+
+## 5. 문제 해결
+```bash
+# HAProxy 로그 확인
+docker compose exec haproxy cat /var/log/haproxy/haproxy.log
+
+# 네트워크 연결 확인
+docker compose exec haproxy netstat -tulpn
+
+# SSL 연결 테스트
+openssl s_client -connect localhost:443 -servername gitlab.local
+
+# HAProxy 설정 다시 로드
+docker compose exec haproxy haproxy -c -f /usr/local/etc/haproxy/haproxy.cfg
+docker compose kill -s HUP haproxy
+```
+
+## 6. 서비스 재시작
+```bash
+# 단일 서비스 재시작
+docker compose restart haproxy
+
+# 설정 변경 후 재시작
+docker compose up -d --force-recreate haproxy
+
+# 전체 서비스 재시작
+docker compose down
+docker compose up -d
+```
+

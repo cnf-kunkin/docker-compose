@@ -27,6 +27,7 @@ graph TB
 # 시스템 업데이트
 sudo apt update && sudo apt upgrade -y
 
+
 # Docker 설치
 curl -fsSL https://get.docker.com | sudo sh
 sudo usermod -aG docker $USER
@@ -114,6 +115,10 @@ cd docker-compose
 git add .
 git commit -m "feat: 환경 설정 변경"
 git push origin main
+
+# 다른 개발자의 변경사항 가져오기
+git fetch origin
+git pull origin main
 ```
 
 ## 5. 디렉토리 구조
