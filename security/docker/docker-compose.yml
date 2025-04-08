@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  # Nginx 리버스 프록시 서버
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ../config/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - /data/certs:/etc/nginx/certs:ro
+      - /data/logs/nginx:/var/log/nginx
+    depends_on:
+      - sonarqube
+      - zap
+    networks:
+      - security-net
+
+  # SonarQube 코드 품질 분석 서버
+  sonarqube:
+    image: sonarqube:lts
+    environment:
+      - SONAR_JDBC_URL=${SONAR_JDBC_URL}             # PostgreSQL 연결 문자열
+      - SONAR_JDBC_USERNAME=${SONAR_JDBC_USERNAME:-sonar}
+      - SONAR_JDBC_PASSWORD=${SONAR_JDBC_PASSWORD:-sonar}
+      - SONAR_ES_JAVA_OPTS=${SONAR_ES_JAVA_OPTS:--Xmx512m -Xms512m}
+    ulimits:
+      nofile:              # 파일 디스크립터 제한 설정
+        soft: 65536
+        hard: 65536
+    volumes:
+      - /data/sonarqube/data:/opt/sonarqube/data         # 분석 데이터
+      - /data/sonarqube/logs:/opt/sonarqube/logs         # 로그 파일
+      - /data/sonarqube/extensions:/opt/sonarqube/extensions  # 플러그인
+    depends_on:
+      - sonarqube-db
+    networks:
+      - security-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/api/system/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # SonarQube PostgreSQL 데이터베이스
+  sonarqube-db:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=${SONAR_JDBC_USERNAME:-sonar}
+      - POSTGRES_PASSWORD=${SONAR_JDBC_PASSWORD:-sonar}
+      - POSTGRES_DB=sonar
+    volumes:
+      - /data/sonarqube/postgresql:/var/lib/postgresql/data  # DB 데이터
+    networks:
+      - security-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sonar"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # OWASP ZAP 보안 취약점 스캐너
+  zap:
+    image: owasp/zap2docker-stable
+    command: zap.sh -daemon -host 0.0.0.0 -port 8080 -config api.key=${ZAP_API_KEY:-changeme}
+    volumes:
+      - ../config/zap:/zap/wrk:rw        # ZAP 설정 파일
+      - /data/zap:/zap/results:rw        # 스캔 결과
+    networks:
+      - security-net
+    security_opt:
+      - no-new-privileges:true           # 권한 상승 방지
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+# 네트워크 설정
+networks:
+  security-net:
+    driver: bridge

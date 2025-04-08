@@ -1,0 +1,160 @@
+version: '3.8'
+
+services:
+  # Nginx 리버스 프록시 서버
+  nginx:
+    image: nginx:alpine    # 경량화된 Nginx 이미지 사용
+    ports:
+      - "80:80"           # HTTP 포트
+      - "443:443"         # HTTPS 포트
+    volumes:
+      - ../config/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - /data/certs:/etc/nginx/certs:ro
+      - /data/logs/nginx:/var/log/nginx
+    depends_on:
+      - gitlab
+      - jenkins
+      - harbor
+    networks:
+      - cicd_network
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # GitLab 소스 코드 관리 서버
+  gitlab:
+    image: gitlab/gitlab-ce:latest
+    hostname: gitlab.local
+    environment:
+      # GitLab 기본 설정
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url '${GITLAB_EXTERNAL_URL:-https://gitlab.local}'
+        gitlab_rails['gitlab_shell_ssh_port'] = ${GITLAB_SSH_PORT:-2222}
+        gitlab_rails['initial_root_password'] = '${GITLAB_ROOT_PASSWORD}'
+    ports:
+      - "2222:22"
+    volumes:
+      - ${GITLAB_HOME:-/data/gitlab}/config:/etc/gitlab
+      - ${GITLAB_HOME:-/data/gitlab}/logs:/var/log/gitlab
+      - ${GITLAB_HOME:-/data/gitlab}/data:/var/opt/gitlab
+    networks:
+      - cicd_network
+    healthcheck:
+      test: ["CMD", "/opt/gitlab/bin/gitlab-healthcheck", "--fail"]
+      interval: 60s
+      timeout: 30s
+      retries: 3
+    security_opt:
+      - no-new-privileges:true
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+
+  # GitLab CI 실행기
+  gitlab-runner:
+    image: gitlab/gitlab-runner:latest
+    volumes:
+      - /data/gitlab/runner:/etc/gitlab-runner      # Runner 설정
+      - /var/run/docker.sock:/var/run/docker.sock   # Docker 소켓 마운트
+    networks:
+      - cicd_network
+
+  # Jenkins CI/CD 서버
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: jenkins
+    user: root  # Docker 소켓 접근을 위해 필요
+    ports:
+      - "8080:8080"
+    environment:
+      # Jenkins 환경 설정
+      - JENKINS_ADMIN_ID=${JENKINS_ADMIN_ID:-admin}
+      - JENKINS_ADMIN_PASSWORD=${JENKINS_ADMIN_PASSWORD}
+      - JENKINS_OPTS="--prefix=/jenkins --httpsKeyStore=/var/jenkins_home/keystore.jks"
+      # JVM 메모리 설정
+      - JAVA_OPTS="-Xmx2g -Xms512m -XX:MaxMetaspaceSize=512m"
+    volumes:
+      - ${JENKINS_HOME:-/data/jenkins}:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/jenkins"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - cicd_network
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+
+  # Harbor 컨테이너 레지스트리
+  harbor:
+    image: goharbor/harbor-core:v2.8.0
+    env_file:
+      - ../.env    # Harbor 환경변수 파일
+    depends_on:
+      - harbor-db
+      - harbor-redis
+    volumes:
+      - /data/harbor/core:/data
+      - /data/harbor/config:/etc/harbor
+      - /data/certs:/etc/harbor/ssl:ro
+    environment:
+      - HARBOR_PROTOCOL=https
+      - HARBOR_ADMIN_PASSWORD=${HARBOR_ADMIN_PASSWORD}
+      - HARBOR_DB_PASSWORD=${HARBOR_DB_PASSWORD}
+      - CORE_SECRET=${HARBOR_SECRET_KEY}
+    ports:
+      - "443:443"
+      - "4443:4443"
+    networks:
+      - cicd_network
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v2.0/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  harbor-db:
+    image: goharbor/harbor-db:v2.8.0
+    volumes:
+      - /data/harbor/database:/var/lib/postgresql/data
+    networks:
+      - cicd_network
+
+  harbor-redis:
+    image: goharbor/harbor-redis:v2.8.0
+    volumes:
+      - /data/harbor/redis:/var/lib/redis
+    networks:
+      - cicd_network
+
+  harbor-registry:
+    image: goharbor/harbor-registry-photon:v2.8.0
+    volumes:
+      - /data/harbor/registry:/storage
+      - /data/certs:/etc/harbor/ssl:ro
+    environment:
+      - REGISTRY_HTTP_TLS_CERTIFICATE=/etc/harbor/ssl/harbor.local.crt
+      - REGISTRY_HTTP_TLS_KEY=/etc/harbor/ssl/harbor.local.key
+    networks:
+      - cicd_network
+
+networks:
+  cicd_network:
+    driver: bridge

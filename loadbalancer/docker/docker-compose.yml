@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  haproxy:
+    image: haproxy:latest
+    container_name: haproxy
+    # 시스템 제한 설정
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+    # 리소스 제한 설정
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 1G
+          pids: 100    # pids_limit를 여기로 통합
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8404:8404"
+    environment:
+      - STATS_PORT=${HAPROXY_STATS_PORT:-8404}
+      - STATS_USER=${HAPROXY_STATS_USER:-admin}
+      - STATS_PASSWORD=${HAPROXY_STATS_PASSWORD:-admin}
+    # 볼륨 설정
+    volumes:
+      - ../config/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+      - /data/certs/combined:/etc/ssl/certs:ro
+      - /data/haproxy/logs:/var/log/haproxy
+    # tmpfs 제거하고 권한 설정 변경
+    user: root    # root 사용자로 실행 (권한 문제 해결)
+    restart: unless-stopped
+    networks:
+      - proxy-net
+    sysctls:
+      - net.ipv4.ip_unprivileged_port_start=0
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8404/stats"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    # 보안 설정 추가
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    tmpfs:
+      - /tmp
+    # 기본 명령어로 변경
+    command: haproxy -f /usr/local/etc/haproxy/haproxy.cfg
+
+networks:
+  proxy-net:
+    driver: bridge

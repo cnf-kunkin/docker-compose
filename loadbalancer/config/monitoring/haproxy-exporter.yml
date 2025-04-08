@@ -1,0 +1,8 @@
+scrape_configs:
+  - job_name: 'haproxy'
+    metrics_path: '/stats;csv'
+    static_configs:
+      - targets: ['haproxy:8404']
+    basic_auth:
+      username: ${HAPROXY_STATS_USER}
+      password: ${HAPROXY_STATS_PASSWORD}
