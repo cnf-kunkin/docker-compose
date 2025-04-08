@@ -104,7 +104,19 @@ docker compose up -d
   - Security VM: 2 CPU, 4GB RAM, 60GB Disk
   - Application VM: 4 CPU, 8GB RAM, 80GB Disk
 
-## 4. 디렉토리 구조
+## 4. Git 저장소 설정
+```bash
+# 소스 코드 다운로드
+git clone https://github.com/cnf-kunkin/docker-compose.git
+cd docker-compose
+
+# 변경사항 커밋 및 푸시
+git add .
+git commit -m "feat: 환경 설정 변경"
+git push origin main
+```
+
+## 5. 디렉토리 구조
 ```bash
 docker-compose/
 ├── loadbalancer/     # 1단계: LoadBalancer VM
@@ -114,7 +126,7 @@ docker-compose/
 └── application/     # 5단계: Application VM
 ```
 
-## 5. 도메인 구성
+## 6. 도메인 구성
 - LoadBalancer: haproxy.local
 - CI/CD: gitlab.local, jenkins.local, harbor.local
 - Monitoring: grafana.local, prometheus.local
