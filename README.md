@@ -121,6 +121,80 @@ git fetch origin
 git pull origin main
 ```
 
+## Git 저장소 사용 방법
+
+### 전체 프로젝트 클론
+```bash
+# 전체 프로젝트 클론
+git clone https://github.com/cnf-kunkin/docker-compose.git
+cd docker-compose
+```
+
+### VM별 선택적 클론
+특정 VM 환경만 필요한 경우 sparse-checkout을 사용하여 필요한 폴더만 클론할 수 있습니다.
+
+```bash
+# 1. 빈 저장소 초기화
+git init docker-compose
+cd docker-compose
+git remote add origin https://github.com/cnf-kunkin/docker-compose.git
+
+# 2. Sparse-checkout 설정
+git sparse-checkout init
+git sparse-checkout set <folder-name>  # 원하는 폴더명 지정
+
+# 3. 저장소 내용 가져오기
+git pull origin main
+
+# 예시: LoadBalancer VM 환경만 클론
+git sparse-checkout set loadbalancer
+
+# 예시: CI/CD VM 환경만 클론
+git sparse-checkout set cicd
+
+# 예시: 여러 폴더 동시 클론
+git sparse-checkout set loadbalancer cicd monitoring
+```
+
+### VM별 디렉토리 설명
+```plaintext
+docker-compose/
+├── loadbalancer/     # LoadBalancer VM (172.16.10.3)
+│   ├── docker/         # Docker Compose 파일
+│   ├── config/         # HAProxy, SSL 설정
+│   └── README.md       # 설치 및 설정 가이드
+├── cicd/            # CI/CD VM (172.16.10.10)
+│   ├── docker/         # Docker Compose 파일
+│   ├── config/         # GitLab, Jenkins, Harbor 설정
+│   └── README.md       # 설치 및 설정 가이드
+├── monitoring/      # Monitoring VM (172.16.10.20)
+│   ├── docker/         # Docker Compose 파일
+│   ├── config/         # Grafana, Prometheus 설정
+│   └── README.md       # 설치 및 설정 가이드
+├── security/        # Security VM (172.16.10.30)
+│   ├── docker/         # Docker Compose 파일
+│   ├── config/         # SonarQube, OWASP ZAP 설정
+│   └── README.md       # 설치 및 설정 가이드
+└── application/     # Application VM (172.16.10.40)
+    ├── docker/         # Docker Compose 파일
+    ├── apps/           # 애플리케이션 소스코드
+    ├── config/         # Nginx 설정
+    └── README.md       # 설치 및 설정 가이드
+```
+
+### 작업 브랜치 생성
+```bash
+# 새로운 작업 브랜치 생성
+git checkout -b feature/[기능명]
+
+# 변경사항 커밋
+git add .
+git commit -m "feat: 새로운 기능 추가"
+
+# 원격 저장소에 푸시
+git push origin feature/[기능명]
+```
+
 ## 5. 디렉토리 구조
 ```bash
 docker-compose/

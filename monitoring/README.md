@@ -1,5 +1,42 @@
 # Monitoring VM 설정 가이드
 
+## 소스코드 가져오기
+Monitoring 환경만 선택적으로 클론하기:
+```bash
+# 1. 빈 저장소 초기화
+git init docker-compose
+cd docker-compose
+git remote add origin https://github.com/cnf-kunkin/docker-compose.git
+
+# 2. Monitoring 디렉토리만 가져오기
+git sparse-checkout init
+git sparse-checkout set monitoring
+git pull origin main
+
+# 3. Monitoring 디렉토리로 이동
+cd monitoring
+```
+
+## 설정 파일 생성
+```bash
+# 환경변수 파일 생성
+cp config/env.sample .env
+
+# 환경변수 파일 수정
+cat > .env << EOF
+# Grafana 설정
+GF_SECURITY_ADMIN_PASSWORD=change_this_password  # 변경 필요
+GF_SERVER_ROOT_URL=https://grafana.local
+
+# Prometheus 설정
+PROMETHEUS_RETENTION_TIME=15d
+PROMETHEUS_STORAGE_PATH=/data/prometheus
+EOF
+
+# 권한 설정
+chmod 600 .env
+```
+
 ## 1. 시스템 구성도
 ```mermaid
 graph TB

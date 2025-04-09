@@ -1,4 +1,21 @@
-# Application VM 구성 가이드
+# Application VM 설정 가이드
+
+## 소스코드 가져오기
+Application 환경만 선택적으로 클론하기:
+```bash
+# 1. 빈 저장소 초기화
+git init docker-compose
+cd docker-compose
+git remote add origin https://github.com/cnf-kunkin/docker-compose.git
+
+# 2. Application 디렉토리만 가져오기
+git sparse-checkout init
+git sparse-checkout set application
+git pull origin main
+
+# 3. Application 디렉토리로 이동
+cd application
+```
 
 ## 1. 시스템 구성도
 ```mermaid
@@ -84,13 +101,29 @@ sudo chmod -R 700 /data/certs
 ### 3.3 환경변수 설정
 ```bash
 # 환경변수 파일 생성
-cp .env.sample .env
-
-# 환경변수 파일 권한 설정
-chmod 600 .env
+cp config/env.sample .env
 
 # 환경변수 파일 수정
-vim .env
+cat > .env << EOF
+# 공통 설정
+NODE_ENV=production
+TZ=Asia/Seoul
+
+# Next.js 설정
+NEXT_PORT=3000
+NEXT_PUBLIC_API_URL=https://nest-demo.local/api
+
+# Nest.js 설정
+NEST_PORT=3001
+NEST_JWT_SECRET=change_this_secret_key      # 변경 필요
+
+# Python 설정
+PYTHON_PORT=8000
+PYTHON_SECRET_KEY=change_this_secret_key    # 변경 필요
+EOF
+
+# 권한 설정
+chmod 600 .env
 ```
 
 ### 3.4 SSL 인증서 설정

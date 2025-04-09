@@ -16,7 +16,11 @@ services:
       - jenkins
       - harbor
     networks:
-      - cicd_network
+      loadbalancer_net:
+        ipv4_address: 172.16.10.10
+      internal_net:
+        aliases:
+          - nginx.cicd.local
     healthcheck:
       test: ["CMD", "nginx", "-t"]
       interval: 30s
@@ -47,7 +51,12 @@ services:
       - ${GITLAB_HOME:-/data/gitlab}/logs:/var/log/gitlab
       - ${GITLAB_HOME:-/data/gitlab}/data:/var/opt/gitlab
     networks:
-      - cicd_network
+      internal_net:
+        aliases:
+          - gitlab.cicd.local
+    expose:
+      - "80"
+      - "22"
     healthcheck:
       test: ["CMD", "/opt/gitlab/bin/gitlab-healthcheck", "--fail"]
       interval: 60s
@@ -86,14 +95,19 @@ services:
     volumes:
       - ${JENKINS_HOME:-/data/jenkins}:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      internal_net:
+        aliases:
+          - jenkins.cicd.local
+    expose:
+      - "8080"
+      - "50000"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/jenkins"]
       interval: 30s
       timeout: 10s
       retries: 3
     restart: unless-stopped
-    networks:
-      - cicd_network
     security_opt:
       - no-new-privileges:true
     read_only: true
@@ -121,7 +135,14 @@ services:
       - "443:443"
       - "4443:4443"
     networks:
-      - cicd_network
+      internal_net:
+        aliases:
+          - harbor.cicd.local
+      loadbalancer_net:   # Harbor는 외부 접근 필요
+    expose:
+      - "443"
+      - "4443"
+      - "8080"
     security_opt:
       - no-new-privileges:true
     healthcheck:
@@ -135,14 +156,18 @@ services:
     volumes:
       - /data/harbor/database:/var/lib/postgresql/data
     networks:
-      - cicd_network
+      internal_net:
+        aliases:
+          - harbor-db.cicd.local
 
   harbor-redis:
     image: goharbor/harbor-redis:v2.8.0
     volumes:
       - /data/harbor/redis:/var/lib/redis
     networks:
-      - cicd_network
+      internal_net:
+        aliases:
+          - harbor-redis.cicd.local
 
   harbor-registry:
     image: goharbor/harbor-registry-photon:v2.8.0
@@ -153,8 +178,19 @@ services:
       - REGISTRY_HTTP_TLS_CERTIFICATE=/etc/harbor/ssl/harbor.local.crt
       - REGISTRY_HTTP_TLS_KEY=/etc/harbor/ssl/harbor.local.key
     networks:
-      - cicd_network
+      internal_net:
+        aliases:
+          - harbor-registry.cicd.local
 
 networks:
-  cicd_network:
+  loadbalancer_net:
+    external: true    # HAProxy 연결용 외부 네트워크
+    name: loadbalancer_net
+  internal_net:
     driver: bridge
+    internal: true    # 내부 서비스 통신용
+    ipam:
+      config:
+        - subnet: 172.20.10.0/24
+    driver_opts:
+      com.docker.network.bridge.name: cicd_internal

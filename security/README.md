@@ -1,5 +1,22 @@
 # Security VM 설정 가이드
 
+## 소스코드 가져오기
+Security 환경만 선택적으로 클론하기:
+```bash
+# 1. 빈 저장소 초기화
+git init docker-compose
+cd docker-compose
+git remote add origin https://github.com/cnf-kunkin/docker-compose.git
+
+# 2. Security 디렉토리만 가져오기
+git sparse-checkout init
+git sparse-checkout set security
+git pull origin main
+
+# 3. Security 디렉토리로 이동
+cd security
+```
+
 ## 1. 시스템 구성도
 ```mermaid
 graph TB
@@ -34,6 +51,27 @@ graph TB
 ```bash
 mkdir -p config/{nginx,sonarqube,zap}
 mkdir -p data/{sonarqube,zap}
+```
+
+## 설정 파일 생성
+```bash
+# 환경변수 파일 생성
+cp config/env.sample .env
+
+# 환경변수 파일 수정
+cat > .env << EOF
+# SonarQube 설정
+SONAR_JDBC_USERNAME=sonar
+SONAR_JDBC_PASSWORD=change_this_password     # 변경 필요
+SONAR_JDBC_URL=jdbc:postgresql://sonarqube-db:5432/sonar
+SONAR_ES_JAVA_OPTS=-Xmx512m -Xms512m
+
+# OWASP ZAP 설정
+ZAP_API_KEY=change_this_api_key             # 변경 필요
+EOF
+
+# 권한 설정
+chmod 600 .env
 ```
 
 ## 4. 서비스 실행

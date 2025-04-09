@@ -234,20 +234,43 @@ echo 'alias docker-compose="docker compose"' >> ~/.bashrc
 source ~/.bashrc
 
 # 버전 확인
-docker version
+docker --version
 docker-compose version
 docker compose version
+
+# Docker version 28.0.4, build b8034c0
+# Docker Compose version v2.34.0
+
 ```
 
 ## 4. 호스트 설정
 ### 4.1 호스트 파일 설정
 ```bash
 # sudo vi /etc/hosts 파일에 추가
+# 기본 설정
+127.0.0.1   localhost
+127.0.1.1   vm-[서버명]
+
+# LoadBalancer
 172.16.10.3    haproxy.local
-172.16.10.10   gitlab.local jenkins.local harbor.local
-172.16.10.20   grafana.local prometheus.local
-172.16.10.30   sonarqube.local security.local
-172.16.10.40   next-demo.local nest-demo.local python-demo.local
+
+# CI/CD 서비스
+172.16.10.10   gitlab.local
+172.16.10.10   jenkins.local
+172.16.10.10   harbor.local
+
+# 모니터링 서비스
+172.16.10.20   grafana.local
+172.16.10.20   prometheus.local
+
+# 보안 서비스
+172.16.10.30   sonarqube.local
+172.16.10.30   security.local
+
+# 애플리케이션 서비스
+172.16.10.40   next-demo.local
+172.16.10.40   nest-demo.local
+172.16.10.40   python-demo.local
 ```
 
 ### 4.2 방화벽 설정
@@ -274,11 +297,6 @@ sudo ufw status
 
 ## 5. 설치 확인
 ```bash
-# Docker 버전 확인
-docker --version
-docker compose version
-docker-compose version
-
 # Docker 실행 테스트
 docker run hello-world
 # Docker 실행 테스트 삭제
@@ -291,23 +309,23 @@ docker rmi hello-world        # Then remove the image
 ## 6. VM별 호스트네임 변경
 ```bash
 # VM별 IP 및 호스트네임 변경
-# LoadBalancer VM (172.16.10.3)
+# LoadBalancer VM (172.16.10.3) D:\vmware\cicd\vm-haproxy
 sudo sed -i 's/172\.16\.10\.90/172.16.10.3/g' /etc/netplan/50-cloud-init.yaml
 sudo hostnamectl set-hostname vm-haproxy
 
-# CI/CD VM (172.16.10.10)
+# CI/CD VM (172.16.10.10) D:\vmware\cicd\vm-cicd
 sudo sed -i 's/172\.16\.10\.90/172.16.10.10/g' /etc/netplan/50-cloud-init.yaml
 sudo hostnamectl set-hostname vm-cicd
 
-# Monitoring VM (172.16.10.20)
+# Monitoring VM (172.16.10.20) D:\vmware\cicd\vm-monitoring
 sudo sed -i 's/172\.16\.10\.90/172.16.10.20/g' /etc/netplan/50-cloud-init.yaml
 sudo hostnamectl set-hostname vm-monitoring
 
-# Security VM (172.16.10.30)
+# Security VM (172.16.10.30) D:\vmware\cicd\vm-security
 sudo sed -i 's/172\.16\.10\.90/172.16.10.30/g' /etc/netplan/50-cloud-init.yaml
 sudo hostnamectl set-hostname vm-security
 
-# Application VM (172.16.10.40)
+# Application VM (172.16.10.40) D:\vmware\cicd\vm-app
 sudo sed -i 's/172\.16\.10\.90/172.16.10.40/g' /etc/netplan/50-cloud-init.yaml
 sudo hostnamectl set-hostname vm-app
 

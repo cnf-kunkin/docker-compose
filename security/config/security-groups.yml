@@ -1,0 +1,43 @@
+# LoadBalancer 보안 그룹
+loadbalancer:
+  inbound:
+    - port: 80
+      source: 0.0.0.0/0
+    - port: 443
+      source: 0.0.0.0/0
+    - port: 8404
+      source: 172.16.10.0/24
+
+# CICD 보안 그룹
+cicd:
+  inbound:
+    - port: 80
+      source: 172.16.10.3/32
+    - port: 22
+      source: 172.16.10.0/24
+
+# Monitoring 보안 그룹
+monitoring:
+  inbound:
+    - port: 80
+      source: 172.16.10.3/32
+    - port: 9090
+      source: 172.16.10.0/24
+
+# Security 보안 그룹
+security:
+  inbound:
+    - port: 80
+      source: 172.16.10.3/32
+    - port: 9000
+      source: 172.16.10.0/24
+
+# Application 보안 그룹
+application:
+  inbound:
+    - port: 80
+      source: 172.16.10.3/32
+    - port: 3000-3001
+      source: 172.16.10.0/24
+    - port: 8000
+      source: 172.16.10.0/24

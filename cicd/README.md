@@ -1,4 +1,21 @@
-# CI/CD VM 구성 가이드
+# CI/CD VM 설정 가이드
+
+## 소스코드 가져오기
+CI/CD 환경만 선택적으로 클론하기:
+```bash
+# 1. 빈 저장소 초기화
+git init docker-compose
+cd docker-compose
+git remote add origin https://github.com/cnf-kunkin/docker-compose.git
+
+# 2. CI/CD 디렉토리만 가져오기
+git sparse-checkout init
+git sparse-checkout set cicd
+git pull origin main
+
+# 3. CI/CD 디렉토리로 이동
+cd cicd
+```
 
 ## 1. 시스템 구성도
 ```mermaid
@@ -142,6 +159,36 @@ sudo chown -R root:root /data/gitlab
 sudo chmod -R 755 /data/harbor
 sudo chmod 600 /data/certs/*.key /data/certs/*.pem
 sudo chmod 644 /data/certs/*.crt
+```
+
+## 설정 파일 생성
+```bash
+# 환경변수 파일 생성
+cp config/env.sample .env
+
+# 환경변수 파일 수정
+cat > .env << EOF
+# GitLab 설정
+GITLAB_EXTERNAL_URL=https://gitlab.local
+GITLAB_ROOT_PASSWORD=change_this_password    # 변경 필요
+GITLAB_SSH_PORT=2222
+
+# Jenkins 설정
+JENKINS_ADMIN_ID=admin
+JENKINS_ADMIN_PASSWORD=change_this_password  # 변경 필요
+
+# Harbor 설정
+HARBOR_ADMIN_PASSWORD=Harbor12345           # 변경 필요
+HARBOR_DB_PASSWORD=harbor_db_pass          # 변경 필요
+HARBOR_SECRET_KEY=generate_random_32_chars  # 변경 필요
+
+# 볼륨 경로
+GITLAB_HOME=/data/gitlab
+JENKINS_HOME=/data/jenkins
+EOF
+
+# 권한 설정
+chmod 600 .env
 ```
 
 ## 5. Nginx 설정

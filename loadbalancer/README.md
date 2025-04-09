@@ -1,5 +1,22 @@
 # LoadBalancer VM 설정 가이드
 
+## 소스코드 가져오기
+LoadBalancer 환경만 선택적으로 클론하기:
+```bash
+# 1. 빈 저장소 초기화
+git init docker-compose
+cd docker-compose
+git remote add origin https://github.com/cnf-kunkin/docker-compose.git
+
+# 2. LoadBalancer 디렉토리만 가져오기
+git sparse-checkout init
+git sparse-checkout set loadbalancer
+git pull origin main
+
+# 3. LoadBalancer 디렉토리로 이동
+cd loadbalancer
+```
+
 ## 1. 시스템 구성도
 ```mermaid
 graph TB
@@ -39,7 +56,7 @@ sudo useradd -r -u 99 -g haproxy -d /var/lib/haproxy -s /sbin/nologin haproxy
 
 # 소유권 설정
 sudo chown -R root:root /data/certs
-sudo chown -R 99:99 /data/haproxy
+sudo chown -R haproxy:haproxy /data/haproxy
 sudo chown -R syslog:adm /data/logs
 
 # 권한 설정
@@ -75,6 +92,26 @@ sudo chown -R root:root /data/haproxy
 sudo chown -R root:root /data/certs
 sudo chmod -R 644 /data/certs/combined/*.pem
 sudo chmod 755 /data/certs/combined
+```
+
+## 설정 파일 생성
+```bash
+# 환경변수 파일 생성
+cp config/env.sample .env
+
+# 환경변수 파일 수정
+cat > .env << EOF
+# HAProxy 상태 페이지 설정
+HAPROXY_STATS_PORT=8404
+HAPROXY_STATS_USER=admin
+HAPROXY_STATS_PASSWORD=change_this_password  # 변경 필요
+
+# 인증서 설정
+SSL_CERT_PATH=/data/certs/combined
+EOF
+
+# 권한 설정
+chmod 600 .env
 ```
 
 ## 5. 서비스 관리
