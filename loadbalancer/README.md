@@ -60,10 +60,9 @@ sudo chown -R haproxy:haproxy /data/haproxy
 sudo chown -R syslog:adm /data/logs
 
 # 권한 설정
-sudo chmod 700 /data/certs/private
+sudo chmod 755 /data/certs/private
 sudo chmod 755 /data/certs/combined
 sudo chmod -R 755 /data/haproxy
-sudo chmod 644 /data/haproxy/logs/*
 sudo chmod -R 755 /data/logs
 
 # SELinux 컨텍스트 설정 (SELinux가 활성화된 경우)
@@ -86,18 +85,17 @@ sudo cp /home/ubuntu/docker-compose/loadbalancer/config/ssl/generate-certs.sh /d
 sudo chmod +x generate-certs.sh
 sudo ./generate-certs.sh
 
-sudo chown -R root:root /data/haproxy
-
 # 권한 설정
-sudo chown -R root:root /data/certs
+# sudo chown -R root:root /data/certs
 sudo chmod -R 644 /data/certs/combined/*.pem
-sudo chmod 755 /data/certs/combined
+# sudo chmod 755 /data/certs/combined
 ```
 
 ## 설정 파일 생성
 ```bash
 # 환경변수 파일 생성
-cp config/env.sample .env
+cd ~/docker-compose/loadbalancer/
+cp .env.sample .env
 
 # 환경변수 파일 수정
 cat > .env << EOF
