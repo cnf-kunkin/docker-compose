@@ -119,13 +119,13 @@ done
 
 # 권한 설정
 chown -R root:root $CERT_PATH
-chmod 600 $CERT_PATH/*.key $COMBINED_PATH/*.pem
+chmod 644 $CERT_PATH/*.key $COMBINED_PATH/*.pem
 chmod 644 $CERT_PATH/*.crt $CERT_PATH/*.conf
 chmod 755 $CERT_PATH $COMBINED_PATH
 
 # 권한 강화
-find $CERT_PATH -type f -name "*.key" -exec chmod 600 {} \;
-find $CERT_PATH -type f -name "*.pem" -exec chmod 600 {} \;
+find $CERT_PATH -type f -name "*.key" -exec chmod 644 {} \;
+find $CERT_PATH -type f -name "*.pem" -exec chmod 644 {} \;
 find $CERT_PATH -type f -name "*.crt" -exec chmod 644 {} \;
 
 echo "All certificates have been generated successfully in $COMBINED_PATH"
@@ -160,6 +160,6 @@ cat "$CERT_DIR/haproxy.crt" "$CERT_DIR/haproxy.key" > "$CERT_DIR/haproxy.pem"
 cat "$CERT_DIR/haproxy.local.crt" "$CERT_DIR/haproxy.local.key" > "$CERT_DIR/haproxy.local.pem"
 
 # 권한 설정
-chmod 600 "$CERT_DIR"/*.pem
+chmod 644 "$CERT_DIR"/*.pem
 chmod 644 "$CERT_DIR"/*.crt
-chmod 600 "$CERT_DIR"/*.key
+chmod 644 "$CERT_DIR"/*.key

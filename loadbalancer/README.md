@@ -48,32 +48,24 @@ graph TB
 
 ```bash
 # 기본 디렉토리 생성
-sudo mkdir -p /data/{certs/{combined,private},haproxy/{logs,lib,data},logs}
+sudo mkdir -p /data/{certs/combined,haproxy/{logs,lib,data},logs}
 
 # HAProxy 사용자 및 그룹 생성 (Docker 컨테이너의 기본 UID/GID 사용)
-sudo groupadd -r -g 99 haproxy
-sudo useradd -r -u 99 -g haproxy -d /var/lib/haproxy -s /sbin/nologin haproxy
 
 # 소유권 설정
 sudo chown -R root:root /data/certs
-sudo chown -R haproxy:haproxy /data/haproxy
+sudo chown -R 99:99 /data/haproxy
 sudo chown -R syslog:adm /data/logs
 
 # 권한 설정
-sudo chmod 755 /data/certs/private
 sudo chmod 755 /data/certs/combined
 sudo chmod -R 755 /data/haproxy
 sudo chmod -R 755 /data/logs
 
-# SELinux 컨텍스트 설정 (SELinux가 활성화된 경우)
-if command -v semanage >/dev/null 2>&1; then
-    sudo semanage fcontext -a -t httpd_sys_content_t "/data/haproxy(/.*)?"
-    sudo restorecon -R /data/haproxy
-fi
 
 # HAProxy 실행 디렉토리 생성
 sudo mkdir -p /var/run/haproxy
-sudo chown haproxy:haproxy /var/run/haproxy
+sudo chown 99:99 /var/run/haproxy
 sudo chmod 755 /var/run/haproxy
 ```
 
@@ -85,10 +77,6 @@ sudo cp /home/ubuntu/docker-compose/loadbalancer/config/ssl/generate-certs.sh /d
 sudo chmod +x generate-certs.sh
 sudo ./generate-certs.sh
 
-# 권한 설정
-# sudo chown -R root:root /data/certs
-sudo chmod -R 644 /data/certs/combined/*.pem
-# sudo chmod 755 /data/certs/combined
 ```
 
 ## 설정 파일 생성
@@ -102,14 +90,9 @@ cat > .env << EOF
 # HAProxy 상태 페이지 설정
 HAPROXY_STATS_PORT=8404
 HAPROXY_STATS_USER=admin
-HAPROXY_STATS_PASSWORD=change_this_password  # 변경 필요
-
-# 인증서 설정
-SSL_CERT_PATH=/data/certs/combined
+HAPROXY_STATS_PASSWORD=admin  # 실제 환경에서 변경 필요
 EOF
 
-# 권한 설정
-chmod 600 .env
 ```
 
 ## 5. 서비스 관리
@@ -144,7 +127,7 @@ docker compose exec haproxy ps aux | grep haproxy
 docker compose exec haproxy haproxy -c -f /usr/local/etc/haproxy/haproxy.cfg
 
 # Stats 페이지 접속 확인
-curl -u admin:changeme http://localhost:8404/stats
+curl -u admin:admin https://localhost:8404/stats
 
 # SSL 인증서 검증
 docker compose exec haproxy openssl x509 -in /etc/ssl/certs/haproxy.pem -text -noout
