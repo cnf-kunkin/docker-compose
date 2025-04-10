@@ -28,8 +28,8 @@ ipconfig /all | findstr VMware
 - VMware에서 새로운 VM 생성
   ```bash
   # 각 VM별 스펙 설정
-  LoadBalancer VM: 2 CPU, 2GB RAM, 40GB Disk
   CI/CD VM: 6 CPU, 12GB RAM, 100GB Disk
+  Harbor VM: 4 CPU, 8GB RAM, 80GB Disk
   Monitoring VM: 2 CPU, 4GB RAM, 60GB Disk
   Security VM: 2 CPU, 4GB RAM, 60GB Disk
   Application VM: 4 CPU, 8GB RAM, 80GB Disk
@@ -228,9 +228,14 @@ sudo docker info | grep "Docker Root Dir"
 ### 3.3 Docker Compose 설치
 ```bash
 # Docker Compose 설치
-sudo apt install -y docker-compose-plugin
+# 버전 확인 
+https://github.com/docker/compose/releases
 
-echo 'alias docker-compose="docker compose"' >> ~/.bashrc
+sudo curl -SL https://github.com/docker/compose/releases/download/v2.34.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
+
+sudo chmod +x /usr/local/bin/docker-compose
+
+docker-compose --version
 source ~/.bashrc
 
 # 버전 확인
@@ -249,15 +254,11 @@ docker compose version
 # sudo vi /etc/hosts 파일에 추가
 # 기본 설정
 127.0.0.1   localhost
-127.0.1.1   vm-[서버명]
-
-# LoadBalancer
-172.16.10.3    haproxy.local
 
 # CI/CD 서비스
 172.16.10.10   gitlab.local
 172.16.10.10   jenkins.local
-172.16.10.10   harbor.local
+172.16.10.11   harbor.local
 
 # 모니터링 서비스
 172.16.10.20   grafana.local
