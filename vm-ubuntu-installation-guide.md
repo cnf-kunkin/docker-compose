@@ -245,7 +245,17 @@ docker compose version
 
 # Docker version 28.0.4, build b8034c0
 # Docker Compose version v2.34.0
+```
+### 3.4 인증서 설치 스크립트
+```bash
+# 스크립트 실행 권한 부여
+sudo chmod +x ~/docker-compose/generate-certs.sh
 
+# 스크립트 실행
+sudo ~/docker-compose/generate-certs.sh
+
+# 인증서 설치 확인
+ls -l /data/certs
 ```
 
 ## 4. 호스트 설정
@@ -310,13 +320,14 @@ docker rmi hello-world        # Then remove the image
 ## 6. VM별 호스트네임 변경
 ```bash
 # VM별 IP 및 호스트네임 변경
-# LoadBalancer VM (172.16.10.3) D:\vmware\cicd\vm-haproxy
-sudo sed -i 's/172\.16\.10\.90/172.16.10.3/g' /etc/netplan/50-cloud-init.yaml
-sudo hostnamectl set-hostname vm-haproxy
 
 # CI/CD VM (172.16.10.10) D:\vmware\cicd\vm-cicd
 sudo sed -i 's/172\.16\.10\.90/172.16.10.10/g' /etc/netplan/50-cloud-init.yaml
 sudo hostnamectl set-hostname vm-cicd
+
+# Harbor VM (172.16.10.11) D:\vmware\cicd\vm-harbor
+sudo sed -i 's/172\.16\.10\.90/172.16.10.11/g' /etc/netplan/50-cloud-init.yaml
+sudo hostnamectl set-hostname vm-harbor
 
 # Monitoring VM (172.16.10.20) D:\vmware\cicd\vm-monitoring
 sudo sed -i 's/172\.16\.10\.90/172.16.10.20/g' /etc/netplan/50-cloud-init.yaml

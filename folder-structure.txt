@@ -1,0 +1,43 @@
+docker-compose/
+├── docs/                  # 문서 모음
+│   └── images/           # 다이어그램 이미지
+├── vm-cicd/              # CI/CD VM 설정
+│   ├── docker/
+│   │   ├── docker-compose.yml
+│   │   ├── .env.sample
+│   │   └── nginx/
+│   │       └── conf.d/
+│   │           └── default.conf
+│   └── README.md
+├── vm-harbor/            # Harbor VM 설정
+│   ├── docker/
+│   │   ├── docker-compose.yml
+│   │   ├── .env.sample
+│   │   └── nginx/
+│   │       └── conf.d/
+│   │           └── default.conf
+│   └── README.md
+├── vm-monitoring/        # Monitoring VM 설정
+│   ├── docker/
+│   │   ├── docker-compose.yml
+│   │   ├── .env.sample
+│   │   └── nginx/
+│   │       └── conf.d/
+│   │           └── default.conf
+│   └── README.md
+├── vm-security/          # Security VM 설정
+│   ├── docker/
+│   │   ├── docker-compose.yml
+│   │   ├── .env.sample
+│   │   └── nginx/
+│   │       └── conf.d/
+│   │           └── default.conf
+│   └── README.md
+└── vm-application/       # Application VM 설정
+    ├── docker/
+    │   ├── docker-compose.yml
+    │   ├── .env.sample
+    │   └── nginx/
+    │       └── conf.d/
+    │           └── default.conf
+    └── README.md

@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /data/certs/combined:/etc/nginx/certs:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+    networks:
+      - security_network
+    restart: unless-stopped
+
+  sonarqube:
+    image: sonarqube:latest
+    environment:
+      - SONAR_JDBC_URL=jdbc:postgresql://sonarqube-db:5432/sonar
+      - SONAR_JDBC_USERNAME=sonar
+      - SONAR_JDBC_PASSWORD=sonar
+    volumes:
+      - /data/sonarqube/data:/opt/sonarqube/data
+      - /data/sonarqube/logs:/opt/sonarqube/logs
+      - /data/sonarqube/extensions:/opt/sonarqube/extensions
+    networks:
+      - security_network
+    restart: unless-stopped
+
+  sonarqube-db:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=sonar
+      - POSTGRES_PASSWORD=sonar
+      - POSTGRES_DB=sonar
+    volumes:
+      - /data/sonarqube/postgresql:/var/lib/postgresql/data
+    networks:
+      - security_network
+    restart: unless-stopped
+
+  zap:
+    image: owasp/zap2docker-stable
+    command: zap.sh -daemon -host 0.0.0.0 -port 8080 -config api.addrs.addr.name=.* -config api.addrs.addr.regex=true
+    volumes:
+      - /data/zap/data:/zap/data
+    networks:
+      - security_network
+    restart: unless-stopped
+
+networks:
+  security_network:
+    driver: bridge

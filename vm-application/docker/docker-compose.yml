@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /data/certs/combined:/etc/nginx/certs:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+    networks:
+      - app_network
+    restart: unless-stopped
+
+  nextjs:
+    image: node:18-alpine
+    working_dir: /app
+    volumes:
+      - /data/nextjs:/app
+    command: npm run start
+    networks:
+      - app_network
+    restart: unless-stopped
+
+  nestjs:
+    image: node:18-alpine
+    working_dir: /app
+    volumes:
+      - /data/nestjs:/app
+    command: npm run start:prod
+    networks:
+      - app_network
+    restart: unless-stopped
+
+  python:
+    image: python:3.9-slim
+    working_dir: /app
+    volumes:
+      - /data/python:/app
+    command: python main.py
+    networks:
+      - app_network
+    restart: unless-stopped
+
+networks:
+  app_network:
+    driver: bridge
