@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  python:
+    image: ${PYTHON_IMAGE}
+    working_dir: /app
+    ports:
+      - "${PYTHON_PORT}:8000"
+    volumes:
+      - /data/python:/app
+    command: python main.py
+    networks:
+      - app_network
+    restart: unless-stopped
+
+networks:
+  app_network:
+    external: true

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="spring-demo" default="build" basedir=".">
+    <property name="src.dir" value="src/main/java"/>
+    <property name="resources.dir" value="src/main/resources"/>
+    <property name="web.dir" value="src/main/webapp"/>
+    <property name="build.dir" value="build"/>
+    <property name="dist.dir" value="dist"/>
+    <property name="lib.dir" value="lib"/>
+    
+    <!-- Spring Framework JARs -->
+    <path id="compile.classpath">
+        <fileset dir="${lib.dir}">
+            <include name="*.jar"/>
+        </fileset>
+    </path>
+
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+        <delete dir="${dist.dir}"/>
+    </target>
+
+    <target name="init">
+        <mkdir dir="${build.dir}/classes"/>
+        <mkdir dir="${dist.dir}"/>
+    </target>
+
+    <target name="compile" depends="init">
+        <javac srcdir="${src.dir}" destdir="${build.dir}/classes" includeantruntime="false">
+            <classpath refid="compile.classpath"/>
+        </javac>
+    </target>
+
+    <target name="copy-resources">
+        <copy todir="${build.dir}/classes">
+            <fileset dir="${resources.dir}"/>
+        </copy>
+        <copy todir="${build.dir}/webapp">
+            <fileset dir="${web.dir}"/>
+        </copy>
+    </target>
+
+    <target name="war" depends="compile,copy-resources">
+        <war destfile="${dist.dir}/${ant.project.name}.war" webxml="${web.dir}/WEB-INF/web.xml">
+            <classes dir="${build.dir}/classes"/>
+            <lib dir="${lib.dir}"/>
+            <webinf dir="${web.dir}/WEB-INF"/>
+        </war>
+    </target>
+
+    <target name="build" depends="clean,war"/>
+</project>

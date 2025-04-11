@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  nestjs:
+    image: ${NEST_IMAGE}
+    working_dir: /app
+    ports:
+      - "${NEST_PORT}:3000"
+    volumes:
+      - /data/nestjs:/app
+    command: npm run start:prod
+    networks:
+      - app_network
+    restart: unless-stopped
+
+networks:
+  app_network:
+    external: true

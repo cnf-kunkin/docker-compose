@@ -1,0 +1,78 @@
+variables:
+  DOCKER_REGISTRY: harbor.local
+  DOCKER_IMAGE: $DOCKER_REGISTRY/$CI_PROJECT_PATH
+  DOCKER_TAG: $CI_COMMIT_SHA
+  SSH_USER: devops
+  APP_SERVER: 172.16.10.40
+
+stages:
+  - test
+  - quality
+  - build
+  - security
+  - deploy
+
+test:
+  stage: test
+  script:
+    - npm install
+    - npm test
+  only:
+    - main
+    - develop
+
+code_quality:
+  stage: quality
+  image: 
+    name: sonarqube:latest
+    entrypoint: [""]
+  variables:
+    SONAR_HOST_URL: "https://sonarqube.local"
+    SONAR_TOKEN: $SONAR_TOKEN
+  script:
+    - sonar-scanner
+  only:
+    - main
+    - develop
+
+build:
+  stage: build
+  script:
+    - docker build -t $DOCKER_IMAGE:$DOCKER_TAG .
+    - docker login $DOCKER_REGISTRY -u $HARBOR_USER -p $HARBOR_PASSWORD
+    - docker push $DOCKER_IMAGE:$DOCKER_TAG
+  only:
+    - main
+    - develop
+
+security_scan:
+  stage: security
+  script:
+    - trivy image $DOCKER_IMAGE:$DOCKER_TAG
+  only:
+    - main
+    - develop
+
+deploy:
+  stage: deploy
+  before_script:
+    - 'command -v ssh-agent >/dev/null || ( apt-get update -y && apt-get install openssh-client -y )'
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - echo "$SSH_KNOWN_HOSTS" >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+  script:
+    - scp docker-compose.prod.yml $SSH_USER@$APP_SERVER:/data/app/
+    - ssh $SSH_USER@$APP_SERVER "cd /data/app && 
+      echo \"DOCKER_IMAGE=${DOCKER_IMAGE}\" > .env &&
+      echo \"DOCKER_TAG=${DOCKER_TAG}\" >> .env &&
+      docker login ${DOCKER_REGISTRY} -u ${HARBOR_USER} -p ${HARBOR_PASSWORD} &&
+      docker-compose -f docker-compose.prod.yml pull &&
+      docker-compose -f docker-compose.prod.yml up -d --force-recreate app &&
+      docker image prune -f"
+  environment:
+    name: production
+  only:
+    - main

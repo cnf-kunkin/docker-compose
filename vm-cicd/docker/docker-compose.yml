@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  # GitLab - 내부 포트만 사용하고 외부 포트는 노출하지 않음
+  gitlab:
+    image: 'gitlab/gitlab-ce:latest'
+    container_name: gitlab
+    restart: always
+    hostname: 'gitlab.local'
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'https://gitlab.local'
+        nginx['listen_port'] = 80
+        nginx['listen_https'] = false
+        nginx['proxy_set_headers'] = {
+          "X-Forwarded-Proto" => "https",
+          "X-Forwarded-Ssl" => "on"
+        }
+        gitlab_rails['gitlab_shell_ssh_port'] = 2222
+        gitlab_rails['time_zone'] = 'Asia/Seoul'
+    ports:
+      - '2222:22' # SSH 포트만 직접 노출
+    volumes:
+      - '/data/gitlab/config:/etc/gitlab'
+      - '/data/gitlab/logs:/var/log/gitlab'
+      - '/data/gitlab/data:/var/opt/gitlab'
+    networks:
+      - devops_network
+    shm_size: '256m'
+
+  # GitLab Runner
+  gitlab-runner:
+    image: 'gitlab/gitlab-runner:latest'
+    container_name: gitlab-runner
+    restart: always
+    depends_on:
+      - gitlab
+    volumes:
+      - '/data/gitlab-runner/config:/etc/gitlab-runner'
+      - '/data/gitlab-runner/data:/home/gitlab-runner'
+      - '/var/run/docker.sock:/var/run/docker.sock'
+    networks:
+      - devops_network
+    environment:
+      - TZ=Asia/Seoul
+
+  # Jenkins
+  jenkins:
+    image: 'jenkins/jenkins:lts'
+    container_name: jenkins
+    restart: always
+    user: root
+    environment:
+      - TZ=Asia/Seoul
+    volumes:
+      - '/data/jenkins:/var/jenkins_home'
+      - '/var/run/docker.sock:/var/run/docker.sock'
+    networks:
+      - devops_network
+
+  # Nginx (리버스 프록시) - 호스트의 80, 443 포트를 사용
+  nginx:
+    image: 'nginx:latest'
+    container_name: nginx
+    restart: always
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - '/data/nginx/conf:/etc/nginx/conf.d'
+      - '/data/nginx/ssl:/etc/nginx/ssl'
+      - '/data/nginx/logs:/var/log/nginx'
+    networks:
+      - devops_network
+    depends_on:
+      - gitlab
+      - jenkins
+
+networks:
+  devops_network:
+    driver: bridge
+EOL

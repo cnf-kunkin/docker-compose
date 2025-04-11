@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  java-app:
+    build: .
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+      - JAVA_OPTS=${JAVA_OPTS}
+      - SERVER_PORT=${SERVER_PORT}
+    ports:
+      - "${SERVER_PORT}:8080"
+    volumes:
+      - /data/java-app/logs:/app/logs
+      - /data/java-app/resources:/app/resources
+      - /data/java-app/config:/app/config
+    networks:
+      - app_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  app_network:
+    external: true

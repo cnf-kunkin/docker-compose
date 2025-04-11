@@ -1,182 +1,177 @@
-# Configuration file of Harbor
+# Harbor 구성 파일
 
-# The IP address or hostname to access admin UI and registry service.
-# DO NOT use localhost or 127.0.0.1, because Harbor needs to be accessed by external clients.
+# 관리자 UI와 레지스트리 서비스에 접근하기 위한 IP 주소 또는 호스트명
+# localhost나 127.0.0.1을 사용하지 마세요. Harbor는 외부 클라이언트의 접근이 필요합니다.
 hostname: harbor.local
 
-# http related config
+# HTTP 관련 설정
 http:
-  # port for http, default is 80. If https enabled, this port will redirect to https port
+  # HTTP 포트 (기본값: 80). HTTPS가 활성화된 경우 HTTPS 포트로 리다이렉트됩니다.
   port: 80
 
-# https related config
+# HTTPS 관련 설정
 https:
-  # https port for harbor, default is 443
+  # Harbor HTTPS 포트 (기본값: 443)
   port: 443
-  # The path of cert and key files for nginx
+  # Nginx용 인증서와 키 파일 경로
   certificate: /data/certs/combined/harbor.local.pem
   private_key: /data/certs/harbor.local.key
-  # enable strong ssl ciphers (default: false)
+  # 강력한 SSL 암호화 활성화 (기본값: false)
   # strong_ssl_ciphers: false
 
-# # Harbor will set ipv4 enabled only by default if this block is not configured
-# # Otherwise, please uncomment this block to configure your own ip_family stacks
+# # Harbor는 기본적으로 ipv4만 활성화합니다. 이 블록이 설정되지 않은 경우
+# # ipv6을 활성화하려면 이 블록의 주석을 해제하고 설정하세요.
 # ip_family:
-#   # ipv6Enabled set to true if ipv6 is enabled in docker network, currently it affected the nginx related component
+#   # ipv6Enabled를 true로 설정하면 docker 네트워크에서 ipv6이 활성화됩니다. 현재 nginx 관련 구성 요소에 영향을 미칩니다.
 #   ipv6:
 #     enabled: false
-#   # ipv4Enabled set to true by default, currently it affected the nginx related component
+#   # ipv4Enabled는 기본적으로 true로 설정됩니다. 현재 nginx 관련 구성 요소에 영향을 미칩니다.
 #   ipv4:
 #     enabled: true
 
-# # Uncomment following will enable tls communication between all harbor components
+# # 아래 주석을 해제하면 모든 Harbor 구성 요소 간 TLS 통신이 활성화됩니다.
 # internal_tls:
-#   # set enabled to true means internal tls is enabled
+#   # enabled를 true로 설정하면 내부 TLS가 활성화됩니다.
 #   enabled: true
-#   # put your cert and key files on dir
+#   # 인증서와 키 파일을 저장할 디렉토리 경로를 설정하세요.
 #   dir: /etc/harbor/tls/internal
 
-
-# Uncomment external_url if you want to enable external proxy
-# And when it enabled the hostname will no longer used
+# 외부 프록시를 활성화하려면 external_url을 설정하세요.
+# 활성화되면 hostname은 더 이상 사용되지 않습니다.
 # external_url: https://reg.mydomain.com:8433
 
-# The initial password of Harbor admin
-# It only works in first time to install harbor
-# Remember Change the admin password from UI after launching Harbor.
+# Harbor 관리자 초기 비밀번호
+# 최초 설치 시에만 적용됩니다.
+# Harbor UI에서 관리자 비밀번호를 변경하는 것을 잊지 마세요.
 harbor_admin_password: Harbor12345
 
-# Harbor DB configuration
+# Harbor DB 설정
 database:
-  # The password for the user('postgres' by default) of Harbor DB. Change this before any production use.
+  # Harbor DB 사용자('postgres' 기본값)의 비밀번호. 운영 환경에서는 반드시 변경하세요.
   password: root123
-  # The maximum number of connections in the idle connection pool. If it <=0, no idle connections are retained.
+  # 유휴 연결 풀의 최대 연결 수. 0 이하면 유휴 연결을 유지하지 않습니다.
   max_idle_conns: 100
-  # The maximum number of open connections to the database. If it <= 0, then there is no limit on the number of open connections.
-  # Note: the default number of connections is 1024 for postgres of harbor.
+  # 데이터베이스 최대 연결 수. 0 이하면 제한이 없습니다.
+  # 참고: Harbor postgres의 기본 연결 수는 1024입니다.
   max_open_conns: 900
-  # The maximum amount of time a connection may be reused. Expired connections may be closed lazily before reuse. If it <= 0, connections are not closed due to a connection's age.
-  # The value is a duration string. A duration string is a possibly signed sequence of decimal numbers, each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+  # 연결 재사용 최대 시간. 만료된 연결은 재사용 전에 자동 종료됩니다.
   conn_max_lifetime: 5m
-  # The maximum amount of time a connection may be idle. Expired connections may be closed lazily before reuse. If it <= 0, connections are not closed due to a connection's idle time.
-  # The value is a duration string. A duration string is a possibly signed sequence of decimal numbers, each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+  # 연결이 유휴 상태로 있을 수 있는 최대 시간
   conn_max_idle_time: 0
 
-# The default data volume
+# 기본 데이터 볼륨
 data_volume: /data/harbor/data
 
-# Harbor Storage settings by default is using /data dir on local filesystem
-# Uncomment storage_service setting If you want to using external storage
+# Harbor 저장소 설정
+# 기본적으로 /data 디렉토리의 로컬 파일시스템을 사용합니다.
+# 외부 스토리지를 사용하려면 storage_service 설정의 주석을 해제하세요.
 # storage_service:
-#   # ca_bundle is the path to the custom root ca certificate, which will be injected into the truststore
-#   # of registry's containers.  This is usually needed when the user hosts a internal storage with self signed certificate.
+#   # ca_bundle은 사용자 정의 루트 CA 인증서 경로입니다. 이는 레지스트리 컨테이너의 신뢰 저장소에 주입됩니다.
+#   # 사용자가 자체 서명 인증서를 사용하여 내부 스토리지를 호스팅하는 경우 필요합니다.
 #   ca_bundle:
 
-#   # storage backend, default is filesystem, options include filesystem, azure, gcs, s3, swift and oss
-#   # for more info about this configuration please refer https://distribution.github.io/distribution/about/configuration/
-#   # and https://distribution.github.io/distribution/storage-drivers/
+#   # 저장소 백엔드, 기본값은 파일 시스템입니다. 옵션에는 파일 시스템, azure, gcs, s3, swift 및 oss가 포함됩니다.
+#   # 이 구성에 대한 자세한 내용은 https://distribution.github.io/distribution/about/configuration/
+#   # 및 https://distribution.github.io/distribution/storage-drivers/를 참조하세요.
 #   filesystem:
 #     maxthreads: 100
-#   # set disable to true when you want to disable registry redirect
+#   # 레지스트리 리디렉션을 비활성화하려면 disable을 true로 설정하세요.
 #   redirect:
 #     disable: false
 
-# Trivy configuration
+# Trivy 구성
 #
-# Trivy DB contains vulnerability information from NVD, Red Hat, and many other upstream vulnerability databases.
-# It is downloaded by Trivy from the GitHub release page https://github.com/aquasecurity/trivy-db/releases and cached
-# in the local file system. In addition, the database contains the update timestamp so Trivy can detect whether it
-# should download a newer version from the Internet or use the cached one. Currently, the database is updated every
-# 12 hours and published as a new release to GitHub.
+# Trivy DB는 NVD, Red Hat 및 기타 여러 상위 취약점 데이터베이스의 취약점 정보를 포함합니다.
+# GitHub 릴리스 페이지 https://github.com/aquasecurity/trivy-db/releases에서 Trivy에 의해 다운로드되고
+# 로컬 파일 시스템에 캐시됩니다. 또한 데이터베이스에는 업데이트 타임스탬프가 포함되어 있어 Trivy가
+# 인터넷에서 새 버전을 다운로드할지 또는 캐시된 버전을 사용할지 감지할 수 있습니다.
+# 현재 데이터베이스는 12시간마다 업데이트되며 GitHub에 새 릴리스로 게시됩니다.
 trivy:
-  # ignoreUnfixed The flag to display only fixed vulnerabilities
+  # ignoreUnfixed 수정된 취약점만 표시하는 플래그
   ignore_unfixed: false
-  # skipUpdate The flag to enable or disable Trivy DB downloads from GitHub
+  # skipUpdate GitHub에서 Trivy DB 다운로드를 활성화하거나 비활성화하는 플래그
   #
-  # You might want to enable this flag in test or CI/CD environments to avoid GitHub rate limiting issues.
-  # If the flag is enabled you have to download the `trivy-offline.tar.gz` archive manually, extract `trivy.db` and
-  # `metadata.json` files and mount them in the `/home/scanner/.cache/trivy/db` path.
+  # 테스트 또는 CI/CD 환경에서 GitHub의 속도 제한 문제를 방지하려면 이 플래그를 활성화하세요.
+  # 플래그가 활성화된 경우 `trivy-offline.tar.gz` 아카이브를 수동으로 다운로드하고 `trivy.db` 및
+  # `metadata.json` 파일을 추출하여 `/home/scanner/.cache/trivy/db` 경로에 마운트해야 합니다.
   skip_update: false
   #
-  # skipJavaDBUpdate If the flag is enabled you have to manually download the `trivy-java.db` file and mount it in the
-  # `/home/scanner/.cache/trivy/java-db/trivy-java.db` path
+  # skipJavaDBUpdate 플래그가 활성화된 경우 `trivy-java.db` 파일을 수동으로 다운로드하고
+  # `/home/scanner/.cache/trivy/java-db/trivy-java.db` 경로에 마운트해야 합니다.
   skip_java_db_update: false
   #
-  # The offline_scan option prevents Trivy from sending API requests to identify dependencies.
-  # Scanning JAR files and pom.xml may require Internet access for better detection, but this option tries to avoid it.
-  # For example, the offline mode will not try to resolve transitive dependencies in pom.xml when the dependency doesn't
-  # exist in the local repositories. It means a number of detected vulnerabilities might be fewer in offline mode.
-  # It would work if all the dependencies are in local.
-  # This option doesn't affect DB download. You need to specify "skip-update" as well as "offline-scan" in an air-gapped environment.
+  # offline_scan 옵션은 Trivy가 종속성을 식별하기 위해 API 요청을 보내지 않도록 방지합니다.
+  # JAR 파일 및 pom.xml 스캔은 더 나은 감지를 위해 인터넷 액세스가 필요할 수 있지만 이 옵션은 이를 방지하려고 합니다.
+  # 예를 들어, 오프라인 모드는 pom.xml에서 종속성이 로컬 저장소에 없는 경우 전이적 종속성을 해결하려고 하지 않습니다.
+  # 이는 오프라인 모드에서 감지된 취약점 수가 적을 수 있음을 의미합니다.
+  # 이 옵션은 DB 다운로드에 영향을 미치지 않습니다. 에어갭 환경에서는 "skip-update"와 "offline-scan"을 모두 지정해야 합니다.
   offline_scan: false
   #
-  # Comma-separated list of what security issues to detect. Possible values are `vuln`, `config` and `secret`. Defaults to `vuln`.
+  # 감지할 보안 문제의 쉼표로 구분된 목록. 가능한 값은 `vuln`, `config` 및 `secret`입니다. 기본값은 `vuln`입니다.
   security_check: vuln
   #
-  # insecure The flag to skip verifying registry certificate
+  # insecure 레지스트리 인증서 확인을 건너뛰는 플래그
   insecure: false
   #
-  # timeout The duration to wait for scan completion.
-  # There is upper bound of 30 minutes defined in scan job. So if this `timeout` is larger than 30m0s, it will also timeout at 30m0s.
+  # timeout 스캔 완료를 기다리는 시간.
+  # 스캔 작업에서 정의된 상한선은 30분입니다. 따라서 이 `timeout`이 30m0s보다 크면 30m0s에서 시간 초과됩니다.
   timeout: 5m0s
   #
-  # github_token The GitHub access token to download Trivy DB
+  # github_token GitHub 액세스 토큰을 사용하여 Trivy DB 다운로드
   #
-  # Anonymous downloads from GitHub are subject to the limit of 60 requests per hour. Normally such rate limit is enough
-  # for production operations. If, for any reason, it's not enough, you could increase the rate limit to 5000
-  # requests per hour by specifying the GitHub access token. For more details on GitHub rate limiting please consult
-  # https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting
+  # GitHub에서 익명 다운로드는 시간당 60개의 요청 제한을 받습니다. 일반적으로 이러한 속도 제한은 운영 환경에서 충분합니다.
+  # 어떤 이유로든 충분하지 않은 경우 GitHub 액세스 토큰을 지정하여 시간당 요청 제한을 5000으로 늘릴 수 있습니다.
+  # GitHub 속도 제한에 대한 자세한 내용은 https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting를 참조하세요.
   #
-  # You can create a GitHub token by following the instructions in
-  # https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line
+  # GitHub 토큰을 생성하려면 https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line의
+  # 지침을 따르세요.
   #
   # github_token: xxx
 
 jobservice:
-  # Maximum number of job workers in job service
+  # 작업 서비스의 최대 작업자 수
   max_job_workers: 10
-  # The jobLoggers backend name, only support "STD_OUTPUT", "FILE" and/or "DB"
+  # jobLoggers 백엔드 이름, "STD_OUTPUT", "FILE" 및/또는 "DB"만 지원
   job_loggers:
     - STD_OUTPUT
     - FILE
     # - DB
-  # The jobLogger sweeper duration (ignored if `jobLogger` is `stdout`)
+  # jobLogger sweeper 기간 (jobLogger가 stdout인 경우 무시됨)
   logger_sweeper_duration: 1 #days
 
 notification:
-  # Maximum retry count for webhook job
+  # 웹훅 작업의 최대 재시도 횟수
   webhook_job_max_retry: 3
-  # HTTP client timeout for webhook job
+  # 웹훅 작업의 HTTP 클라이언트 시간 초과
   webhook_job_http_client_timeout: 3 #seconds
 
-# Log configurations
+# 로그 구성
 log:
-  # options are debug, info, warning, error, fatal
+  # 옵션은 debug, info, warning, error, fatal입니다.
   level: info
-  # configs for logs in local storage
+  # 로컬 저장소의 로그 구성
   local:
-    # Log files are rotated log_rotate_count times before being removed. If count is 0, old versions are removed rather than rotated.
+    # 로그 파일은 log_rotate_count 횟수만큼 회전된 후 제거됩니다. count가 0이면 이전 버전은 회전되지 않고 제거됩니다.
     rotate_count: 50
-    # Log files are rotated only if they grow bigger than log_rotate_size bytes. If size is followed by k, the size is assumed to be in kilobytes.
-    # If the M is used, the size is in megabytes, and if G is used, the size is in gigabytes. So size 100, size 100k, size 100M and size 100G
-    # are all valid.
+    # 로그 파일은 log_rotate_size 바이트보다 커질 경우에만 회전됩니다. 크기 뒤에 k가 붙으면 크기가 킬로바이트로 간주됩니다.
+    # M이 사용되면 크기가 메가바이트로 간주되고 G가 사용되면 크기가 기가바이트로 간주됩니다. 따라서 크기 100, 크기 100k, 크기 100M 및 크기 100G는 모두 유효합니다.
     rotate_size: 200M
-    # The directory on your host that store log
+    # 로그를 저장할 호스트의 디렉토리
     location: /data/harbor/logs
 
-  # Uncomment following lines to enable external syslog endpoint.
+  # 외부 syslog 엔드포인트를 활성화하려면 아래 줄의 주석을 해제하세요.
   # external_endpoint:
-  #   # protocol used to transmit log to external endpoint, options is tcp or udp
+  #   # 외부 엔드포인트로 로그를 전송하는 데 사용되는 프로토콜, 옵션은 tcp 또는 udp입니다.
   #   protocol: tcp
-  #   # The host of external endpoint
+  #   # 외부 엔드포인트의 호스트
   #   host: localhost
-  #   # Port of external endpoint
+  #   # 외부 엔드포인트의 포트
   #   port: 5140
 
-#This attribute is for migrator to detect the version of the .cfg file, DO NOT MODIFY!
+# 이 속성은 마이그레이터가 .cfg 파일의 버전을 감지하는 데 사용됩니다. 수정하지 마세요!
 _version: 2.12.0
 
-# Uncomment external_database if using external database.
+# 외부 데이터베이스를 사용하는 경우 external_database의 주석을 해제하세요.
 # external_database:
 #   harbor:
 #     host: harbor_db_host
@@ -188,53 +183,50 @@ _version: 2.12.0
 #     max_idle_conns: 2
 #     max_open_conns: 0
 
-# Uncomment redis if need to customize redis db
+# Redis DB를 사용자 정의해야 하는 경우 redis의 주석을 해제하세요.
 # redis:
-#   # db_index 0 is for core, it's unchangeable
+#   # db_index 0은 core용이며 변경할 수 없습니다.
 #   # registry_db_index: 1
 #   # jobservice_db_index: 2
 #   # trivy_db_index: 5
-#   # it's optional, the db for harbor business misc, by default is 0, uncomment it if you want to change it.
+#   # 선택 사항이며 Harbor 비즈니스 기타용 DB입니다. 기본값은 0입니다. 변경하려면 주석을 해제하세요.
 #   # harbor_db_index: 6
-#   # it's optional, the db for harbor cache layer, by default is 0, uncomment it if you want to change it.
+#   # 선택 사항이며 Harbor 캐시 계층용 DB입니다. 기본값은 0입니다. 변경하려면 주석을 해제하세요.
 #   # cache_layer_db_index: 7
 
-# Uncomment external_redis if using external Redis server
+# 외부 Redis 서버를 사용하는 경우 external_redis의 주석을 해제하세요.
 # external_redis:
-#   # support redis, redis+sentinel
-#   # host for redis: <host_redis>:<port_redis>
-#   # host for redis+sentinel:
+#   # redis, redis+sentinel을 지원합니다.
+#   # redis의 호스트: <host_redis>:<port_redis>
+#   # redis+sentinel의 호스트:
 #   #  <host_sentinel1>:<port_sentinel1>,<host_sentinel2>:<port_sentinel2>,<host_sentinel3>:<port_sentinel3>
 #   host: redis:6379
 #   password: 
-#   # Redis AUTH command was extended in Redis 6, it is possible to use it in the two-arguments AUTH <username> <password> form.
-#   # there's a known issue when using external redis username ref:https://github.com/goharbor/harbor/issues/18892
-#   # if you care about the image pull/push performance, please refer to this https://github.com/goharbor/harbor/wiki/Harbor-FAQs#external-redis-username-password-usage
+#   # Redis AUTH 명령은 Redis 6에서 확장되었으며 두 인수 AUTH <username> <password> 형식으로 사용할 수 있습니다.
+#   # 외부 Redis 사용자 이름을 사용할 때 알려진 문제가 있습니다. 참조: https://github.com/goharbor/harbor/issues/18892
+#   # 이미지 풀/푸시 성능에 대해 신경 쓰는 경우 https://github.com/goharbor/harbor/wiki/Harbor-FAQs#external-redis-username-password-usage를 참조하세요.
 #   # username:
-#   # sentinel_master_set must be set to support redis+sentinel
+#   # sentinel_master_set은 redis+sentinel을 지원하려면 설정해야 합니다.
 #   #sentinel_master_set:
-#   # db_index 0 is for core, it's unchangeable
+#   # db_index 0은 core용이며 변경할 수 없습니다.
 #   registry_db_index: 1
 #   jobservice_db_index: 2
 #   trivy_db_index: 5
 #   idle_timeout_seconds: 30
-#   # it's optional, the db for harbor business misc, by default is 0, uncomment it if you want to change it.
+#   # 선택 사항이며 Harbor 비즈니스 기타용 DB입니다. 기본값은 0입니다. 변경하려면 주석을 해제하세요.
 #   # harbor_db_index: 6
-#   # it's optional, the db for harbor cache layer, by default is 0, uncomment it if you want to change it.
+#   # 선택 사항이며 Harbor 캐시 계층용 DB입니다. 기본값은 0입니다. 변경하려면 주석을 해제하세요.
 #   # cache_layer_db_index: 7
 
-# Uncomment uaa for trusting the certificate of uaa instance that is hosted via self-signed cert.
+# 자체 서명 인증서를 통해 호스팅되는 UAA 인스턴스의 인증서를 신뢰하려면 uaa의 주석을 해제하세요.
 # uaa:
 #   ca_file: /path/to/ca
 
-# Global proxy
-# Config http proxy for components, e.g. http://my.proxy.com:3128
-# Components doesn't need to connect to each others via http proxy.
-# Remove component from `components` array if want disable proxy
-# for it. If you want use proxy for replication, MUST enable proxy
-# for core and jobservice, and set `http_proxy` and `https_proxy`.
-# Add domain to the `no_proxy` field, when you want disable proxy
-# for some special registry.
+# 글로벌 프록시
+# 구성 요소에 대한 HTTP 프록시를 구성하세요. 예: http://my.proxy.com:3128
+# 구성 요소는 HTTP 프록시를 통해 서로 연결할 필요가 없습니다.
+# 특정 레지스트리에 대해 프록시를 비활성화하려면 `no_proxy` 필드에 도메인을 추가하세요.
+# 복제를 위해 프록시를 사용하려면 core와 jobservice에 대해 프록시를 활성화하고 `http_proxy` 및 `https_proxy`를 설정해야 합니다.
 proxy:
   http_proxy:
   https_proxy:
@@ -249,68 +241,65 @@ proxy:
 #   port: 9090
 #   path: /metrics
 
-# Trace related config
-# only can enable one trace provider(jaeger or otel) at the same time,
-# and when using jaeger as provider, can only enable it with agent mode or collector mode.
-# if using jaeger collector mode, uncomment endpoint and uncomment username, password if needed
-# if using jaeger agetn mode uncomment agent_host and agent_port
+# 추적 관련 구성
+# 한 번에 하나의 추적 제공자(jaeger 또는 otel)만 활성화할 수 있습니다.
+# jaeger를 제공자로 사용하는 경우 에이전트 모드 또는 수집기 모드로만 활성화할 수 있습니다.
+# jaeger 수집기 모드를 사용하는 경우 endpoint를 주석 해제하고 username, password가 필요한 경우 주석을 해제하세요.
+# jaeger 에이전트 모드를 사용하는 경우 agent_host와 agent_port를 주석 해제하세요.
 # trace:
 #   enabled: true
-#   # set sample_rate to 1 if you wanna sampling 100% of trace data; set 0.5 if you wanna sampling 50% of trace data, and so forth
+#   # sample_rate를 1로 설정하면 추적 데이터의 100%를 샘플링합니다. 0.5로 설정하면 추적 데이터의 50%를 샘플링합니다.
 #   sample_rate: 1
-#   # # namespace used to differentiate different harbor services
+#   # # 서로 다른 Harbor 서비스를 구분하는 데 사용되는 네임스페이스
 #   # namespace:
-#   # # attributes is a key value dict contains user defined attributes used to initialize trace provider
+#   # # 초기 추적 제공자를 설정하는 데 사용되는 사용자 정의 속성을 포함하는 키 값 딕트
 #   # attributes:
 #   #   application: harbor
-#   # # jaeger should be 1.26 or newer.
+#   # # jaeger는 1.26 이상이어야 합니다.
 #   # jaeger:
 #   #   endpoint: http://hostname:14268/api/traces
 #   #   username:
 #   #   password:
 #   #   agent_host: hostname
-#   #   # export trace data by jaeger.thrift in compact mode
+#   #   # compact 모드에서 jaeger.thrift로 추적 데이터를 내보냅니다.
 #   #   agent_port: 6831
 #   # otel:
 #   #   endpoint: hostname:4318
 #   #   url_path: /v1/traces
 #   #   compression: false
 #   #   insecure: true
-#   #   # timeout is in seconds
+#   #   # timeout은 초 단위입니다.
 #   #   timeout: 10
 
-# Enable purge _upload directories
+# _upload 디렉토리 정리 활성화
 upload_purging:
   enabled: true
-  # remove files in _upload directories which exist for a period of time, default is one week.
+  # 기본적으로 일주일 동안 존재하는 _upload 디렉토리의 파일을 제거합니다.
   age: 168h
-  # the interval of the purge operations
+  # 정리 작업의 간격
   interval: 24h
   dryrun: false
 
-# Cache layer configurations
-# If this feature enabled, harbor will cache the resource
-# `project/project_metadata/repository/artifact/manifest` in the redis
-# which can especially help to improve the performance of high concurrent
-# manifest pulling.
-# NOTICE
-# If you are deploying Harbor in HA mode, make sure that all the harbor
-# instances have the same behaviour, all with caching enabled or disabled,
-# otherwise it can lead to potential data inconsistency.
+# 캐시 계층 구성
+# 이 기능이 활성화되면 Harbor는 리소스를 캐시합니다.
+# `project/project_metadata/repository/artifact/manifest`는 특히 높은 동시성
+# 매니페스트 풀링의 성능을 향상시키는 데 도움이 될 수 있습니다.
+# 참고
+# Harbor를 HA 모드로 배포하는 경우 모든 Harbor 인스턴스가 동일한 동작을 가지도록 해야 합니다.
+# 모두 캐싱을 활성화하거나 비활성화해야 하며, 그렇지 않으면 잠재적인 데이터 불일치가 발생할 수 있습니다.
 cache:
-  # not enabled by default
+  # 기본적으로 활성화되지 않음
   enabled: false
-  # keep cache for one day by default
+  # 기본적으로 캐시를 하루 동안 유지
   expire_hours: 24
 
-# Harbor core configurations
-# Uncomment to enable the following harbor core related configuration items.
+# Harbor core 구성
+# 아래 Harbor core 관련 구성 항목을 활성화하려면 주석을 해제하세요.
 # core:
-#   # The provider for updating project quota(usage), there are 2 options, redis or db,
-#   # by default is implemented by db but you can switch the updation via redis which
-#   # can improve the performance of high concurrent pushing to the same project,
-#   # and reduce the database connections spike and occupies.
-#   # By redis will bring up some delay for quota usage updation for display, so only
-#   # suggest switch provider to redis if you were ran into the db connections spike around
-#   # the scenario of high concurrent pushing to same project, no improvement for other scenes.
-#   quota_update_provider: redis # Or db
+#   # 프로젝트 할당량(사용량)을 업데이트하기 위한 제공자. redis 또는 db 옵션이 있으며,
+#   # 기본적으로 db로 구현되지만 동일한 프로젝트에 대한 높은 동시성 푸시의 성능을 향상시키고
+#   # 데이터베이스 연결 스파이크와 점유를 줄일 수 있는 redis를 통해 업데이트를 전환할 수 있습니다.
+#   # redis를 통해 업데이트하면 할당량 사용량 업데이트에 약간의 지연이 발생할 수 있으므로
+#   # 동일한 프로젝트에 대한 높은 동시성 푸시 시나리오에서 데이터베이스 연결 스파이크가 발생한 경우에만
+#   # 제공자를 redis로 전환하는 것이 좋습니다. 다른 시나리오에서는 개선되지 않습니다.
+#   quota_update_provider: redis # 또는 db
