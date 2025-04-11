@@ -1,53 +1,56 @@
-# Runtime data and logs
+### Harbor 관련
 /data/
-**/data/
-**/logs/
-*.log
+/harbor/common/
+/harbor/data/
+*.env
+*.env.sample
 
-# SSL Certificates
+### 인증서 관련
 /certs/
-**/certs/
 *.crt
 *.key
 *.pem
 *.csr
 *.srl
 
-# Environment variables
-.env
-**/.env
-*.env
+### 빌드 산출물
+target/
+build/
+dist/
+*.class
+*.jar
+*.war
 
-# Application specific
-## Node.js
-**/node_modules/
-**/.next/
-**/dist/
-**/.cache/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-## Python
-**/__pycache__/
-**/*.py[cod]
-**/venv/
-**/.env/
-**/.venv/
-**/eggs/
-**/*.egg-info/
-
-# IDE specific
+### IDE 설정
 .idea/
 .vscode/
+*.iml
+*.iws
+*.ipr
+
+### 로그 파일
+logs/
+*.log
+npm-debug.log*
+
+### 임시 파일
+.DS_Store
+Thumbs.db
 *.swp
 *.swo
 *~
 
-# Docker specific
+### Node.js
+node_modules/
+.next/
+.cache/
+dist/
+
+### Spring Boot
+/target/
+!.mvn/wrapper/maven-wrapper.jar
+*.properties.local
+
+### Docker
 .docker/
 docker-compose.override.yml
-
-# System specific
-.DS_Store
-Thumbs.db

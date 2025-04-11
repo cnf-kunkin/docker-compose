@@ -79,4 +79,3 @@ services:
 networks:
   devops_network:
     driver: bridge
-EOL
