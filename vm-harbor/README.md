@@ -91,18 +91,23 @@ graph TD
 
 ### 2.1 기본 환경 설정
 ```bash
-# 인증서 확인 없으면 generate-certs.sh 로 설치 
-ll /data/certs/combined/harbor* 
-
-```
-
-### 2.2 Harbor 설치 준비
-```bash
 # 디렉토리 생성
 sudo mkdir -p /data/harbor/data
 sudo mkdir -p /data/harbor/logs
 sudo mkdir -p /data/certs
 sudo chmod -R 777 /data
+
+cd /data/certs
+# harbor.local 도메인용 인증서 생성
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout harbor.local.key -out harbor.local.crt \
+  -subj "/CN=harbor.local/O=harbor/C=KR"
+
+```
+
+### 2.2 Harbor 설치 준비
+```bash
+
 
 # Harbor 설치 파일 다운로드
 # https://github.com/goharbor/harbor/releases 최신 버전 확인 
@@ -120,12 +125,6 @@ tar xzvf harbor-offline-installer-v2.12.2.tgz
 
 cd ~/harbor
 cp harbor.yml.tmpl harbor.yml
-
-cd /data/certs
-# harbor.local 도메인용 인증서 생성
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-  -keyout harbor.local.key -out harbor.local.crt \
-  -subj "/CN=harbor.local/O=harbor/C=KR"
 
 
 # 설정 파일 수정
@@ -146,12 +145,10 @@ docker compose version
 # 설치 스크립트 실행 
 sudo ./install.sh 
 
-# 설치 로그 확인
-tail -f /var/log/harbor/install.log
-
 # 컨테이너 상태 확인
-docker compose ps
-docker compose logs
+cd ~/harbor
+sudo docker compose ps
+sudo docker compose logs
 ```
 
 ## 4. 서비스 접속 정보

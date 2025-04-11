@@ -28,8 +28,8 @@ sudo nano /etc/hosts
 
 아래 내용을 추가합니다 (IP 주소는 VM의 IP로 변경):
 ```
-192.168.x.x gitlab.local
-192.168.x.x jenkins.local
+172.16.10.10 gitlab.local
+172.16.10.10 jenkins.local
 ```
 
 ## Docker 및 Docker Compose 설치
@@ -86,7 +86,6 @@ sudo chmod -R 777 /data
 
 ### 자체 서명 인증서 생성을 위한 디렉토리 생성
 ```bash
-mkdir -p /data/nginx/ssl
 cd /data/nginx/ssl
 ```
 
@@ -263,39 +262,6 @@ server {
     return 301 https://$host$request_uri;
 }
 EOL
-```
-
-### GitLab Runner 등록 스크립트 작성
-```bash
-cat > register-gitlab-runner.sh << 'EOL'
-#!/bin/bash
-
-# 이 스크립트는 GitLab이 시작된 후에 실행해야 합니다
-# GitLab에서 생성한 등록 토큰이 필요합니다
-
-if [ -z "$1" ]; then
-    echo "Usage: $0 <gitlab-registration-token>"
-    exit 1
-fi
-
-TOKEN=$1
-
-docker-compose exec gitlab-runner gitlab-runner register \
-  --non-interactive \
-  --url "https://gitlab.local" \
-  --registration-token "$TOKEN" \
-  --executor "docker" \
-  --docker-image "docker:20.10.16" \
-  --description "docker-runner" \
-  --tag-list "docker,build" \
-  --run-untagged="true" \
-  --locked="false" \
-  --docker-privileged="true" \
-  --docker-volumes "/var/run/docker.sock:/var/run/docker.sock" \
-  --docker-network-mode "devops_network"
-EOL
-
-chmod +x register-gitlab-runner.sh
 ```
 
 ## 서비스 실행

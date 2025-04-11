@@ -246,21 +246,11 @@ docker compose version
 # Docker version 28.0.4, build b8034c0
 # Docker Compose version v2.34.0
 ```
-### 3.4 인증서 설치 스크립트
-```bash
-# 스크립트 실행 권한 부여
-sudo chmod +x ~/docker-compose/generate-certs.sh
-
-# 스크립트 실행
-sudo ~/docker-compose/generate-certs.sh
-
-# 인증서 설치 확인
-ls -l /data/certs
-```
 
 ## 4. 호스트 설정
 ### 4.1 호스트 파일 설정
 ```bash
+# C:\Windows\System32\drivers\etc\hosts 파일에 추가
 # sudo vi /etc/hosts 파일에 추가
 # 기본 설정
 127.0.0.1   localhost
