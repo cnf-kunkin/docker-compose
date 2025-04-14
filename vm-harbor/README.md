@@ -99,7 +99,7 @@ sudo chmod -R 777 /data
 
 cd /data/certs
 # harbor.local 도메인용 인증서 생성
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
   -keyout harbor.local.key -out harbor.local.crt \
   -subj "/CN=harbor.local/O=harbor/C=KR"
 

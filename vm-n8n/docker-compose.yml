@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  n8n:
+    image: n8nio/n8n
+    restart: always
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=n8n.local
+      - N8N_PORT=5678
+      - NODE_ENV=production
+    volumes:
+      - /data/n8n_data:/home/node/.n8n
+    networks:
+      - n8n_network
+
+  nginx:
+    image: nginx:latest
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /data/nginx/conf:/etc/nginx/conf.d
+      - /data/nginx/ssl:/etc/nginx/ssl
+      - /data/nginx/logs:/var/log/nginx
+    depends_on:
+      - n8n
+    networks:
+      - n8n_network
+
+networks:
+  n8n_network:
+    driver: bridge

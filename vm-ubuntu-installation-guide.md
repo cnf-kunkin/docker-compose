@@ -33,6 +33,7 @@ ipconfig /all | findstr VMware
   Monitoring VM: 2 CPU, 4GB RAM, 60GB Disk
   Security VM: 2 CPU, 4GB RAM, 60GB Disk
   Application VM: 4 CPU, 8GB RAM, 80GB Disk
+  N8N VM: 2 CPU, 4GB RAM, 60GB Disk
   ```
 
 ### 2.2 Ubuntu 설치 프로세스
@@ -231,7 +232,9 @@ sudo docker info | grep "Docker Root Dir"
 # 버전 확인 
 https://github.com/docker/compose/releases
 
-sudo curl -SL https://github.com/docker/compose/releases/download/v2.34.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
+COMPOSE_VERSION=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep 'tag_name' | cut -d '"' -f 4)
+
+sudo curl -SL https://github.com/docker/compose/releases/download/v2.35.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
 
 sudo chmod +x /usr/local/bin/docker-compose
 
@@ -259,6 +262,7 @@ docker compose version
 172.16.10.10   gitlab.local
 172.16.10.10   jenkins.local
 172.16.10.11   harbor.local
+172.16.10.12   n8n.local
 
 # 모니터링 서비스
 172.16.10.20   grafana.local
@@ -272,6 +276,7 @@ docker compose version
 172.16.10.40   next-demo.local
 172.16.10.40   nest-demo.local
 172.16.10.40   python-demo.local
+
 ```
 
 ### 4.2 방화벽 설정
@@ -318,6 +323,12 @@ sudo hostnamectl set-hostname vm-cicd
 # Harbor VM (172.16.10.11) D:\vmware\cicd\vm-harbor
 sudo sed -i 's/172\.16\.10\.90/172.16.10.11/g' /etc/netplan/50-cloud-init.yaml
 sudo hostnamectl set-hostname vm-harbor
+
+
+# Harbor VM (172.16.10.11) D:\vmware\cicd\vm-n8n
+sudo sed -i 's/172\.16\.10\.90/172.16.10.11/g' /etc/netplan/50-cloud-init.yaml
+sudo hostnamectl set-hostname vm-n8n
+
 
 # Monitoring VM (172.16.10.20) D:\vmware\cicd\vm-monitoring
 sudo sed -i 's/172\.16\.10\.90/172.16.10.20/g' /etc/netplan/50-cloud-init.yaml

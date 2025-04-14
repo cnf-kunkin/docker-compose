@@ -92,12 +92,12 @@ cd /data/nginx/ssl
 ### SSL 인증서 생성
 ```bash
 # gitlab.local 도메인용 인증서 생성
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
   -keyout gitlab.local.key -out gitlab.local.crt \
   -subj "/CN=gitlab.local/O=GitLab/C=KR"
 
 # jenkins.local 도메인용 인증서 생성
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
   -keyout jenkins.local.key -out jenkins.local.crt \
   -subj "/CN=jenkins.local/O=Jenkins/C=KR"
 ```
