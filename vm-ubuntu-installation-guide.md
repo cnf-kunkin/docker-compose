@@ -261,6 +261,7 @@ docker compose version
 # CI/CD 서비스
 172.16.10.10   gitlab.local
 172.16.10.10   jenkins.local
+172.16.10.10   gitlab-runner.local
 172.16.10.11   harbor.local
 172.16.10.12   n8n.local
 
@@ -326,7 +327,7 @@ sudo hostnamectl set-hostname vm-harbor
 
 
 # Harbor VM (172.16.10.11) D:\vmware\cicd\vm-n8n
-sudo sed -i 's/172\.16\.10\.90/172.16.10.11/g' /etc/netplan/50-cloud-init.yaml
+sudo sed -i 's/172\.16\.10\.90/172.16.10.12/g' /etc/netplan/50-cloud-init.yaml
 sudo hostnamectl set-hostname vm-n8n
 
 

@@ -4,14 +4,14 @@
 - IP: 172.16.10.11
 - Hostname: vm-harbor
 - 서비스: Harbor Registry
-- SSL: 자체 서명 인증서
+- 포트: 80 (HTTP)
 
 ## 1. 시스템 구성도
 
 ```mermaid
 graph TD
     subgraph Harbor VM[Harbor VM - 172.16.10.11]
-        Proxy[Nginx Proxy<br>443/80] --> Core[Harbor Core]
+        Proxy[Nginx Proxy<br>80] --> Core[Harbor Core]
         
         subgraph Core Components
             Core --> Registry[Registry Service]
@@ -32,8 +32,8 @@ graph TD
         end
     end
 
-    Client[External Client] -->|HTTPS| Proxy
-    Docker[Docker Client] -->|HTTPS| Proxy
+    Client[External Client] -->|HTTP| Proxy
+    Docker[Docker Client] -->|HTTP| Proxy
 ```
 
 ### 1.1 컴포넌트 설명
@@ -68,9 +68,8 @@ graph TD
 
 ### 1.2 네트워크 구성
 - **외부 접근**
-  - HTTPS: 443 포트
-  - HTTP: 80 포트 (HTTPS 리다이렉트)
-  - 도메인: harbor.local
+  - HTTP: 80 포트
+  - IP 기반 접근: http://172.16.10.11:80
 
 - **내부 네트워크**
   - harbor_network (Docker bridge)
@@ -82,9 +81,7 @@ graph TD
 ├── harbor/          # Harbor 설정 및 데이터
 ├── database/        # PostgreSQL 데이터
 ├── redis/           # Redis 데이터
-├── registry/        # 이미지 저장소
-└── certs/          # SSL 인증서
-    └── combined/   # 통합 인증서
+└── registry/        # 이미지 저장소
 ```
 
 ## 2. 설치 순서
@@ -94,27 +91,19 @@ graph TD
 # 디렉토리 생성
 sudo mkdir -p /data/harbor/data
 sudo mkdir -p /data/harbor/logs
-sudo mkdir -p /data/certs
+sudo mkdir -p /data/docker-compose
+
 sudo chmod -R 777 /data
-
-cd /data/certs
-# harbor.local 도메인용 인증서 생성
-openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
-  -keyout harbor.local.key -out harbor.local.crt \
-  -subj "/CN=harbor.local/O=harbor/C=KR"
-
 ```
 
 ### 2.2 Harbor 설치 준비
 ```bash
-
-
 # Harbor 설치 파일 다운로드
 # https://github.com/goharbor/harbor/releases 최신 버전 확인 
-cd ~
-wget https://github.com/goharbor/harbor/releases/download/v2.12.2/harbor-offline-installer-v2.12.2.tgz
+cd /data/docker-compose
+sudo wget https://github.com/goharbor/harbor/releases/download/v2.12.2/harbor-offline-installer-v2.12.2.tgz
 
-tar xzvf harbor-offline-installer-v2.12.2.tgz
+sudo tar xzvf harbor-offline-installer-v2.12.2.tgz
 ```
 
 ## 3. 서비스 배포
@@ -122,20 +111,22 @@ tar xzvf harbor-offline-installer-v2.12.2.tgz
 ### 3.1 설정 파일 준비
 ```bash
 # Harbor 설정
-
-cd ~/harbor
-cp harbor.yml.tmpl harbor.yml
-
+cd /data/docker-compose/harbor
+sudo cp harbor.yml.tmpl harbor.yml
 
 # 설정 파일 수정
-sed -i 's/hostname: reg.mydomain.com/hostname: harbor.local/g' harbor.yml
-sed -i "s#certificate: /your/certificate/path#certificate: /data/certs/harbor.local.crt#g" harbor.yml
-sed -i "s#private_key: /your/private/key/path#private_key: /data/certs/harbor.local.key#g" harbor.yml
-
-# 데이터 경로 수정
-sed -i 's#data_volume: /data#data_volume: /data/harbor/data#g' harbor.yml
-sed -i 's#location: /var/log/harbor#location: /data/harbor/logs#g' harbor.yml
+sudo vi harbor.yml
 ```
+hostname: 172.16.10.11
+
+#https:
+  #certificate: /your/certificate/path
+  #private_key: /your/private/key/path
+
+data_volume: /data/harbor/data
+
+```
+
 
 ### 3.2 Harbor 설치
 ```bash
@@ -146,53 +137,11 @@ docker compose version
 sudo ./install.sh 
 
 # 컨테이너 상태 확인
-cd ~/harbor
 sudo docker compose ps
 sudo docker compose logs
 ```
 
 ## 4. 서비스 접속 정보
-- URL: https://harbor.local
+- URL: http://172.16.10.11:80
 - 초기 계정: admin
 - 초기 비밀번호: Harbor12345
-
-## 5. Docker 클라이언트 설정
-```bash
-# Docker 재시작
-sudo systemctl restart docker
-
-# Harbor 로그인
-docker login harbor.local
-```
-
-## 6. 운영 관리
-
-### 6.1 상태 모니터링
-```bash
-# 전체 서비스 상태
-docker compose ps
-
-# 서비스별 로그 확인
-docker compose logs -f [서비스명]
-
-# 디스크 사용량 확인
-du -sh /data/*
-```
-
-### 6.2 백업
-```bash
-# 설정 파일 백업
-cp ~/harbor/harbor.yml ~/harbor/harbor.yml.bak
-
-# 데이터베이스 백업
-docker compose exec postgresql pg_dump -U postgres harbor > harbor_db_backup.sql
-
-# 인증서 백업
-cp -r /data/certs/combined /data/certs/backup
-```
-
-### 6.3 성능 최적화
-- Registry 캐시 설정
-- Garbage Collection 주기적 실행
-- 로그 로테이션 설정
-- 이미지 청소 정책 설정

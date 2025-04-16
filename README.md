@@ -36,14 +36,21 @@ sudo chmod 755 /data/logs
 ### 2.2 각 VM 구성 순서
 1. CI/CD VM (172.16.10.10)
    - GitLab
+   - gitlab-runner
    - Jenkins
-   - Nginx Proxy
+   
+   - 사설 인증서를 이용한 https 통신
+      172.16.10.10   gitlab.local
+      172.16.10.10   jenkins.local
+      172.16.10.10   gitlab-runner.local
+   - /data/서비스 로 데이터 , 로그 , 설정 영구 보관 
+   
 
 2. Harbor VM (172.16.10.11) 
    - Harbor Registry
    - PostgreSQL
    - Redis
-   - Nginx Proxy
+   
 
 3. Monitoring VM (172.16.10.20)
    - Prometheus
@@ -53,13 +60,13 @@ sudo chmod 755 /data/logs
 4. Security VM (172.16.10.30)
    - SonarQube
    - OWASP ZAP
-   - Nginx Proxy
+   
 
 5. Application VM (172.16.10.40)
    - Next.js Demo
    - Nest.js Demo
    - Python Demo
-   - Nginx Proxy
+   
 
 ### 2.3 실행 명령어
 ```bash

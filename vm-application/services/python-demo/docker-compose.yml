@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  nextjs:
+    image: 172.16.10.11:80/demo/nextjs:latest
+    container_name: nextjs-app
+    environment:
+      - NODE_ENV=production
+    ports:
+      - "3000:3000"
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  nestjs:
+    image: 172.16.10.11:80/demo/nestjs:latest
+    container_name: nestjs-app
+    environment:
+      - NODE_ENV=production
+    ports:
+      - "3001:3001"
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  python:
+    build: .
+    image: 172.16.10.11:80/demo/python:latest
+    container_name: python-app
+    environment:
+      - APP_ENV=production
+      - APP_HOST=0.0.0.0
+      - APP_PORT=8080
+    ports:
+      - "8080:8080"
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge
