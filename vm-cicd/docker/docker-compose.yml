@@ -1,0 +1,78 @@
+version: '3'
+
+services:
+  gitlab:
+    image: 'gitlab/gitlab-ce:latest'
+    restart: always
+    hostname: 'gitlab.local'
+    container_name: gitlab
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://gitlab.local'
+        nginx['listen_port'] = 80
+        nginx['listen_https'] = true
+        nginx['ssl_certificate'] = "/etc/gitlab/ssl/gitlab.crt"
+        nginx['ssl_certificate_key'] = "/etc/gitlab/ssl/gitlab.key"
+        gitlab_rails['gitlab_shell_ssh_port'] = 2222
+        gitlab_rails['time_zone'] = 'Asia/Seoul'
+    ports:
+      - '2222:22'  # SSH 포트만 직접 노출
+    volumes:
+      - '/data/gitlab/config:/etc/gitlab'
+      - '/data/gitlab/logs:/var/log/gitlab'
+      - '/data/gitlab/data:/var/opt/gitlab'
+      - '/data/nginx/certs/gitlab.crt:/etc/gitlab/ssl/gitlab.crt:ro'
+      - '/data/nginx/certs/gitlab.key:/etc/gitlab/ssl/gitlab.key:ro'
+    networks:
+      - devops_network
+
+  gitlab-runner:
+    image: 'gitlab/gitlab-runner:latest'
+    container_name: gitlab-runner
+    restart: always
+    depends_on:
+      - gitlab
+    volumes:
+      - '/data/gitlab-runner/config:/etc/gitlab-runner'
+      - '/var/run/docker.sock:/var/run/docker.sock'
+    networks:
+      - devops_network
+
+  jenkins:
+    image: 'jenkins/jenkins:lts'
+    container_name: jenkins
+    restart: always
+    user: root
+    environment:
+      - JENKINS_OPTS="--prefix=/jenkins --httpPort=8080 --httpsPort=8443"
+      - JENKINS_OPTS_HTTPS="--httpsCertificate=/var/jenkins_home/ssl/jenkins.crt --httpsPrivateKey=/var/jenkins_home/ssl/jenkins.key"
+    volumes:
+      - '/data/jenkins/home:/var/jenkins_home'
+      - '/var/run/docker.sock:/var/run/docker.sock'
+      - '/data/nginx/certs/jenkins.crt:/var/jenkins_home/ssl/jenkins.crt:ro'
+      - '/data/nginx/certs/jenkins.key:/var/jenkins_home/ssl/jenkins.key:ro'
+    networks:
+      - devops_network
+
+  nginx:
+    image: 'nginx:latest'
+    container_name: nginx
+    restart: always
+    ports:
+      - '80:80'     # HTTP
+      - '443:443'   # HTTPS
+    volumes:
+      - '/data/nginx/conf/nginx.conf:/etc/nginx/nginx.conf:ro'
+      - '/data/nginx/conf/conf.d:/etc/nginx/conf.d:ro'
+      - '/data/nginx/certs:/etc/nginx/certs:ro'
+      - '/data/nginx/html:/usr/share/nginx/html:ro'
+      - '/data/nginx/logs:/var/log/nginx'
+    depends_on:
+      - gitlab
+      - jenkins
+    networks:
+      - devops_network
+
+networks:
+  devops_network:
+    driver: bridge

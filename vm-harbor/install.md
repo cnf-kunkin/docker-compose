@@ -34,7 +34,7 @@ cd ~/certs
 # CA 개인키(private key) 생성
 openssl genrsa -out ca.key 4096
 
-# AWS EC2 등에서 작업할 경우 .rnd 파일 생성 필요 -- [AWS 일때만 실행]
+# AWS EC2 등에서 작업할 경우 .rnd 파일 생성 필요
 cd /root
 openssl rand -writerand .rnd
 
@@ -68,7 +68,7 @@ openssl req -sha512 -new \
 x509 v3 확장 파일을 생성하여 서버 인증서에 추가 설정을 적용합니다:
 
 ```bash
-cat > v3.ext << EOF
+cat &gt; v3.ext &lt;&lt;-EOF
 authorityKeyIdentifier=keyid,issuer
 basicConstraints=CA:FALSE
 keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
@@ -101,14 +101,12 @@ openssl x509 -req -sha512 -days 3650 \
 
 ```bash
 # Harbor용 디렉토리 생성 및 인증서 복사
-sudo chmod 777 /data
 mkdir -p /data/cert
 cp harbor.crt /data/cert/
 cp harbor.key /data/cert/
 
 # Docker용 인증서 디렉토리 생성 및 복사
-sudo mkdir -p /etc/docker/certs.d/harbor.local/
-sudo chmod 777 /etc/docker/certs.d/harbor.local/
+mkdir -p /etc/docker/certs.d/harbor.local/
 cp harbor.crt /etc/docker/certs.d/harbor.local/
 cp harbor.key /etc/docker/certs.d/harbor.local/
 cp ca.crt /etc/docker/certs.d/harbor.local/
@@ -127,8 +125,7 @@ Harbor 공식 GitHub에서 최신 버전의 offline installer를 다운로드합
 
 ```bash
 # 직접 다운로드가 가능한 경우
-cd ~
-wget https://github.com/goharbor/harbor/releases/download/v2.13.0/harbor-offline-installer-v2.13.0.tgz
+wget https://github.com/goharbor/harbor/releases/download/v2.6.0/harbor-offline-installer-v2.6.0.tgz
 
 # SSL 지원이 안 되는 환경에서는 다른 PC에서 다운로드 후 파일 전송
 # 또는 wget-ssl 패키지 설치 후 시도
@@ -139,96 +136,25 @@ wget https://github.com/goharbor/harbor/releases/download/v2.13.0/harbor-offline
 #### 2. 압축 해제 및 설정 파일 준비
 
 ```bash
-tar xvf harbor-offline-installer-v2.13.0.tgz
+tar xvf harbor-offline-installer-v2.6.0.tgz
 cd harbor
 
 # 설정 파일 복사 및 수정
 cp harbor.yml.tmpl harbor.yml
-
-
 ```
 
 `harbor.yml` 파일을 열어 다음 항목을 수정합니다:
 
 - hostname: Harbor 서버의 도메인 이름
-    hostname: harbor.local
 - certificate 및 private_key: 앞서 생성한 인증서 경로 설정
-    certificate: /data/cert/harbor.crt
-    private_key: /data/cert/harbor.key
 - harbor_admin_password: 관리자 비밀번호 설정
-    harbor_admin_password: Harbor12345
-- data 경로 수정
-    data_volume: /data/harbor
 
 
 #### 3. Harbor 설치 실행
 
 ```bash
-sudo ./install.sh --with-trivy
+sudo ./install.sh --with-notary --with-trivy
 ```
---with-trivy 옵션   
-Trivy 취약점 스캐너를 Harbor와 통합하는 옵션입니다
-컨테이너 이미지의 자동 스캔 기능을 활성화합니다
-컨테이너 이미지의 취약점을 탐지합니다
-Harbor에 저장된 이미지의 보안 평가를 제공합니다
-
-
-## 정상 설치 테스트 방법
-
-Harbor 설치 후 정상 작동 여부를 테스트하는 방법은 다음과 같습니다:
-
-### 1. 웹 인터페이스 접속 테스트
-
-웹 브라우저에서 설정한 도메인으로 접속해 봅니다:
-
-```
-https://harbor.local
-```
-
-로그인 화면이 나타나면 관리자 ID `admin`과 설정한 비밀번호를 입력합니다[^3].
-
-### 2. Docker 로그인 테스트
-
-터미널에서 Docker CLI를 사용하여 Harbor에 로그인합니다:
-
-```bash
-docker login harbor.local
-
-admnin 
-Harbor12345
-
-
-# 사설 인증서 로그인 무시 옵션 추가
-sudo vi /etc/docker/daemon.json
-{
-  "insecure-registries": ["harbor.local", "172.16.10.11:80"]
-}
-
-sudo systemctl restart docker
-
-```
-
-Username과 Password를 입력하여 로그인이 성공하는지 확인합니다. 만약 인증서 문제로 로그인이 실패한다면, 인증서 설정을 다시 확인해야 합니다[^2].
-
-### 3. 이미지 푸시/풀 테스트
-
-간단한 테스트 이미지를 생성하고 Harbor에 푸시한 후 다시 풀하여 확인합니다:
-
-```bash
-# 테스트 이미지 준비
-docker pull nginx:latest
-docker tag nginx:latest harbor.local/library/nginx:v1
-
-# Harbor에 이미지 푸시
-docker push harbor.local/library/nginx:v1
-
-# 이미지 삭제 후 다시 풀
-docker rmi harbor.local/library/nginx:v1
-docker pull harbor.local/library/nginx:v1
-```
-
-
-===========================================================================================================
 
 
 ### Kubernetes 기반 설치 (Helm 사용)
@@ -326,6 +252,46 @@ volumes:
 ```
 
 
+## 정상 설치 테스트 방법
+
+Harbor 설치 후 정상 작동 여부를 테스트하는 방법은 다음과 같습니다:
+
+### 1. 웹 인터페이스 접속 테스트
+
+웹 브라우저에서 설정한 도메인으로 접속해 봅니다:
+
+```
+https://harbor.local
+```
+
+로그인 화면이 나타나면 관리자 ID `admin`과 설정한 비밀번호를 입력합니다[^3].
+
+### 2. Docker 로그인 테스트
+
+터미널에서 Docker CLI를 사용하여 Harbor에 로그인합니다:
+
+```bash
+docker login harbor.local
+```
+
+Username과 Password를 입력하여 로그인이 성공하는지 확인합니다. 만약 인증서 문제로 로그인이 실패한다면, 인증서 설정을 다시 확인해야 합니다[^2].
+
+### 3. 이미지 푸시/풀 테스트
+
+간단한 테스트 이미지를 생성하고 Harbor에 푸시한 후 다시 풀하여 확인합니다:
+
+```bash
+# 테스트 이미지 준비
+docker pull nginx:latest
+docker tag nginx:latest harbor.local/library/nginx:v1
+
+# Harbor에 이미지 푸시
+docker push harbor.local/library/nginx:v1
+
+# 이미지 삭제 후 다시 풀
+docker rmi harbor.local/library/nginx:v1
+docker pull harbor.local/library/nginx:v1
+```
 
 위 명령이 모두 성공하면 Harbor가 정상적으로 설치되었다고 볼 수 있습니다.
 
