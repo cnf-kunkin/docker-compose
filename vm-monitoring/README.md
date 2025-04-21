@@ -217,12 +217,15 @@ services:
     image: quay.io/prometheus/node-exporter:latest
     container_name: node-exporter
     restart: always
-    network_mode: host  # 호스트 메트릭 수집을 위해 필요
     pid: host
     volumes:
       - /:/host:ro,rslave
     command:
       - '--path.rootfs=/host'
+    ports:
+      - "9100:9100"
+    networks:
+      - monitoring
 
   # 메트릭 저장소
   prometheus:
@@ -231,10 +234,11 @@ services:
     restart: always
     volumes:
       - /data/prometheus/data:/prometheus
+      - /data/prometheus/rules:/etc/prometheus/rules
       - /data/docker-compose/prometheus/conf/prometheus.yml:/etc/prometheus/prometheus.yml
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.retention.time=30d'
+      - '--storage.tsdb.retention.time=15d'
     ports:
       - "9090:9090"
     networks:
@@ -249,6 +253,8 @@ services:
     restart: always
     volumes:
       - /data/grafana/data:/var/lib/grafana
+      - /data/grafana/provisioning:/etc/grafana/provisioning
+      - /data/grafana/dashboards:/var/lib/grafana/dashboards      
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin123
     ports:
@@ -272,6 +278,7 @@ networks:
 sudo chmod -R 777 /data
 docker-compose up -d
 docker-compose logs -f
+docker-compose logs -f prometheus
 
 docker-compose down
 ```
@@ -291,6 +298,102 @@ curl http://localhost:9100/metrics
 ```
 
 출력에 `node_cpu_seconds_total` 등의 메트릭이 표시되면 정상 작동
+
+## 외부 서버 Node Exporter 추가 가이드
+
+다른 서버에서 실행 중인 어플리케이션의 메트릭을 수집하려면 해당 서버에 Node Exporter를 추가하고 Prometheus 설정을 업데이트해야 합니다.
+
+### 1. 외부 서버의 docker-compose.yml 수정
+
+기존 docker-compose.yml 파일에 node-exporter 서비스를 추가합니다:
+
+```yaml
+services:
+  # 기존 서비스들...
+  
+  # Node Exporter 추가
+  node-exporter:
+    image: quay.io/prometheus/node-exporter:latest
+    container_name: node-exporter
+    restart: always
+    pid: host
+    volumes:
+      - /:/host:ro,rslave
+    command:
+      - '--path.rootfs=/host'
+    ports:
+      - "9100:9100"  # 호스트의 9100 포트를 외부에 노출
+    networks:
+      - your_existing_network  # 기존 네트워크 이름으로 변경
+
+networks:
+  your_existing_network:
+    external: false
+```
+
+### 2. Prometheus 설정 업데이트
+
+중앙 모니터링 서버의 prometheus.yml 파일에 새로운 타겟을 추가합니다:
+
+```yaml
+scrape_configs:
+  # 기존 설정...
+
+  - job_name: 'node-exporter-external'
+    static_configs:
+      - targets: ['외부서버IP:9100']  # 외부 서버의 IP 주소와 포트
+        labels:
+          instance: '서버이름'  # 식별하기 쉬운 서버 이름
+```
+
+### 3. 외부 서버 방화벽 설정
+
+Node Exporter의 포트를 외부에서 접근 가능하도록 설정:
+
+```bash
+sudo ufw allow 9100/tcp
+```
+
+### 4. 연결 테스트
+
+중앙 모니터링 서버에서 외부 Node Exporter 연결 테스트:
+
+```bash
+curl http://외부서버IP:9100/metrics
+```
+
+### 5. Prometheus 재시작
+
+설정 변경을 적용하기 위해 Prometheus 서비스 재시작:
+
+```bash
+docker-compose restart prometheus
+```
+
+### 6. 확인
+
+1. Prometheus UI (Status > Targets)에서 새로 추가된 타겟 상태가 UP인지 확인
+2. 다음 PromQL로 메트릭 수집 확인:
+   - `up{job="node-exporter-external"}`
+   - `node_cpu_seconds_total{instance="서버이름"}`
+
+### 주의사항
+
+1. 보안을 위해 가능하면 VPN이나 프라이빗 네트워크를 통해 메트릭을 수집
+2. Node Exporter 포트(9100)는 신뢰할 수 있는 IP에서만 접근 가능하도록 제한
+3. 필요한 경우 TLS를 설정하여 암호화된 통신 사용
+
+### 문제 해결
+
+1. 연결이 안 되는 경우:
+   - 방화벽 설정 확인
+   - Docker 네트워크 설정 확인
+   - Node Exporter 컨테이너 로그 확인
+   
+2. 메트릭이 수집되지 않는 경우:
+   - Prometheus 타겟 상태 확인
+   - 네트워크 지연시간 체크
+   - scrape_interval 조정 고려
 
 ## Grafana 초기 설정
 
