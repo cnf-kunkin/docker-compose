@@ -319,6 +319,10 @@ sudo hostnamectl set-hostname vm-cicd
 sudo sed -i 's/172\.16\.10\.90/172.16.10.11/g' /etc/netplan/50-cloud-init.yaml
 sudo hostnamectl set-hostname vm-harbor
 
+# Harbor VM (172.16.10.12) D:\vmware\cicd\vm-harbor
+sudo sed -i 's/172\.16\.10\.90/172.16.10.12/g' /etc/netplan/50-cloud-init.yaml
+sudo hostnamectl set-hostname vm-n8n
+
 # Monitoring VM (172.16.10.20) D:\vmware\cicd\vm-monitoring
 sudo sed -i 's/172\.16\.10\.90/172.16.10.20/g' /etc/netplan/50-cloud-init.yaml
 sudo hostnamectl set-hostname vm-monitoring

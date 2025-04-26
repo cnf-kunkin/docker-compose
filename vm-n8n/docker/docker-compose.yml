@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n
+    restart: always
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=n8n.local
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - N8N_SSL_CERT=/data/certs/n8n.local.crt
+      - N8N_SSL_KEY=/data/certs/n8n.local.key
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=changeme
+      - DB_TYPE=sqlite
+      - DB_SQLITE_PATH=/data/db/n8n.db
+    volumes:
+      - /data/n8n/db:/data/db
+      - /data/n8n/files:/data/files
+      - /data/nginx/certs:/data/certs
+    networks:
+      - n8n-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: n8n-nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - /data/nginx/certs:/etc/nginx/certs:ro
+    depends_on:
+      - n8n
+    networks:
+      - n8n-network
+
+networks:
+  n8n-network:
+    name: n8n-network
+    driver: bridge
